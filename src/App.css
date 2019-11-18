@@ -1,22 +1,29 @@
 .App {
+  display: flex;
   text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
+  border-width: 1;
+  flex-direction: column;
+  flex:1;
+  justify-content: space-between;
+  overflow:scroll;
 }
 
 .App-header {
   background-color: #282c34;
-  min-height: 100vh;
+  min-height: 10sp;
   display: flex;
   flex-direction: column;
+  flex:2;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+  font-size: calc(15px);
   color: white;
 }
 
-.App-link {
-  color: #09d3ac;
+.BarChart {
+  display: flex;
+  text-align: right;
+  flex-direction: column;
+  flex:3;
+  align-self: flex-end;
+  overflow:scroll;
 }
