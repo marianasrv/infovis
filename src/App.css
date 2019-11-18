@@ -23,7 +23,16 @@
   display: flex;
   text-align: right;
   flex-direction: column;
-  flex:3;
+  flex:4;
   align-self: flex-end;
+  overflow:scroll;
+}
+
+.ScatterPlot {
+  display: flex;
+  text-align: center;
+  flex-direction: column;
+  flex:3;
+  align-self: stretch;
   overflow:scroll;
 }
