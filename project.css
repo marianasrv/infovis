@@ -1,4 +1,30 @@
-h1 {
-  font-size: 18pt;
-  font-family: calibri, arial, sans serif;
-}  
+.App {
+  display: flex;
+  text-align: center;
+  flex-direction: column;
+}
+
+.AppHeader {
+  background-color: #282c34;
+  display: flex;
+  flex-direction: column;
+  flex:1;
+  align-items: center;
+  font-size: calc(15px);
+  color: white;
+}
+
+#scatterplot {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
