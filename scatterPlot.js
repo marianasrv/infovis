@@ -8,16 +8,16 @@ d3.csv("project2.csv").then(function (data) {
 });
 
 function gen_scatterplot() {
-    var w = 1400;
+    var w = 1200;
     var h = 200;
 
     var svg = d3.select("#scatterplot")
                 .append("svg")
-                .attr("width",800)
-                .attr("height",200);
+                .attr("width",w)
+                .attr("height",h);
 
 
-    var padding = 0;
+    var padding = 30;
 
     dataScat.forEach (function(d, i) {
       d.original_publication_year = +d.original_publication_year;
