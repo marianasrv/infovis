@@ -1,6 +1,6 @@
 var dataLine;
 var brush;
-var xScaleOverview, xScale;
+var xScaleOverview, xScale, yScale;
 var width;
 var line, xAxis;
 var focus;
@@ -67,7 +67,7 @@ function gen_lineChart() {
     .scale(xScale)
     .tickFormat(d3.format("d"));
 
-  var yScale = d3.scaleLinear()
+  yScale = d3.scaleLinear()
     .domain([0, 5])
     .range([height, 0]);
 
@@ -222,8 +222,7 @@ function gen_lineChart() {
 
       d3.select(this).transition().call(brush.move, x1 > x0 ? [x0, x1].map(xScaleOverview) : null);
       xScale.domain(d3.event.selection === null ? xScaleOverview.domain() : [x0, x1]);
-      console.log(xScale.domain())
-      console.log(brush.extent())
+      xScaleScat.domain(d3.event.selection === null ? xScaleOverview.domain() : [x0, x1]);
       focus.select(".line").attr("d", line);
       focus.selectAll(".dot")
             .attr("r", 2)
@@ -239,4 +238,17 @@ function gen_lineChart() {
                 return d.title;
             });
       focus.select(".x.axis").call(xAxis);
+      svgScat.selectAll(".dot")
+              .attr("r", 6)
+              .attr("fill", "steelblue")
+              .attr("opacity", "0.5")
+              .attr("cx",function(d) {
+                //  if (d.original_publication_year == xscale().min) {return padding;}
+                return  xScaleScat(d.original_publication_year);
+              })
+              .attr("cy", function(d) {
+                return h - Math.floor(Math.random() * 101) - 50;})
+              .append("title")
+              .text(function(d) { return d.title; });
+      svgScat.select(".x.axis").call(xAxisScat);
 }
