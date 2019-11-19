@@ -239,7 +239,7 @@ function gen_lineChart() {
             });
       focus.select(".x.axis").call(xAxis);
       svgScat.selectAll(".dot")
-              .attr("r", 6)
+              .attr("r", 3)
               .attr("fill", "steelblue")
               .attr("opacity", "0.5")
               .attr("cx",function(d) {
@@ -247,7 +247,7 @@ function gen_lineChart() {
                 return  xScaleScat(d.original_publication_year);
               })
               .attr("cy", function(d) {
-                return h - Math.floor(Math.random() * 101) - 50;})
+                return h - Math.floor(Math.random() * (h/2+1)) - h/4;})
               .append("title")
               .text(function(d) { return d.title; });
       svgScat.select(".x.axis").call(xAxisScat);

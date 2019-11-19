@@ -13,7 +13,7 @@ d3.csv("project2.csv").then(function (data) {
 
 function gen_scatterplot() {
     var w = 1200;
-    h = 200;
+    h = 100;
 
     svgScat = d3.select("#scatterplot")
                 .append("svg")
@@ -45,7 +45,7 @@ function gen_scatterplot() {
 
     svgScat.append("g")
     .attr("class", "x axis")
-   	.attr("transform","translate(0," + (h-padding) + ")")
+   	.attr("transform","translate(0," + (h-20) + ")")
 	   .call(xAxisScat);
 
 
@@ -53,7 +53,7 @@ function gen_scatterplot() {
    svgScat.selectAll("circle")
         .data(dataScat)
         .enter().append("circle")
-        .attr("r", 6)
+        .attr("r", 3)
         .attr("class", "dot")
         .attr("fill", "steelblue")
         .attr("opacity", "0.5")
@@ -62,13 +62,8 @@ function gen_scatterplot() {
                 return  xScaleScat(d.original_publication_year);
           })
         .attr("cy", function(d) {
-            return h - Math.floor(Math.random() * 101) - 50;})
+            return h - Math.floor(Math.random() * (h/2 +1)) - h/4;})
         .append("title")
-          .text(function(d) { return d.title; });;
-
-
-
-
-
+          .text(function(d) { return d.title; });
 
 }
