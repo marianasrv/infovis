@@ -1,17 +1,20 @@
 var dataLine, dataScat, dataBar;
 var brush;
 var xScaleOverview, xScale, yScale;
-var widthLine, widthScat;
+var widthLine, widthScat, heighScat;
 var line, xAxis;
 var focus;
 var height;
+var dispatch;
+var selectedBar, selectedBars, selectedDot, selectedCircle, selectedOnLine;
 
-d3.csv("sample.csv").then(function(data) {
+d3.csv("sample2.csv").then(function(data) {
   //  full_dataScat = data;
   dataLine = data;
   dataScat = data;
   dataBar = data.slice(0, 5);
-  //  dispatch = d3.dispatch("bookEnter");
+  dispatch = d3.dispatch("MouseOver", "MouseLeave");
+
 
   gen_lineChart();
   gen_scatterplot();
@@ -42,7 +45,7 @@ function gen_lineChart() {
 
   height = 100;
   var heightOverview = 50;
-  widthLine = 900;
+  widthLine = 710;
   var padding = 30
 
   xScale = d3.scaleLinear()
@@ -79,12 +82,11 @@ function gen_lineChart() {
 
   brush = d3.brushX()
     .extent([
-      [18, 0],
-      [881, 57]
+      [30, 0],
+      [widthLine - 30, 57]
     ])
     .on("end", brushended);
 
-  //d3.select(this).transition().call(brush.move,  [2000, 2010].map(xScaleOverview));
 
   line = d3.line()
     .x(function(d) {
@@ -139,22 +141,27 @@ function gen_lineChart() {
     .attr("transform", "translate(0," + (height + 5) + ")")
     .call(xAxis);
 
-  focus.selectAll("dot")
+  focus.selectAll("circle")
     .data(filterData(dataLine, xScale.domain()))
     .enter().append("circle")
+    .on("mouseover", function(d) {
+      dispatch.call("MouseOver", d, d);
+    })
+    .on("mouseleave", function(d) {
+      dispatch.call("MouseLeave", d, d);
+    })
     .attr("r", 2)
     .attr("class", "dot")
+    .attr("title", function(d) {return d.title;})
     .attr("cx", function(d) {
       return xScale(d.key);
     })
     .attr("cy", function(d) {
       return yScale(d.value);
     })
-    .style("fill", "steelblue")
-    .append("title")
-    .text(function(d) {
-      return d.title;
-    });
+    .attr("fill", "steelblue")
+    .attr("year", function(d) { return d.key;});
+
 
   context.append("path")
     .datum(dataLine)
@@ -187,12 +194,55 @@ function gen_lineChart() {
     .attr("cy", function(d) {
       return yScaleOverview(d.value);
     })
-    .style("fill", "gray")
-    .append("title")
-    .text(function(d) {
-      return d.title;
+    .style("fill", "gray");
+
+    dispatch.on("MouseOver", function(book) {
+      if (selectedBar) {
+        selectedBar.attr("fill", "steelblue");
+      }
+      if (selectedBars) {
+        selectedBars.attr("fill", "steelblue");
+      }
+      if (selectedDot) {
+        selectedDot.attr("fill", "steelblue");
+      }
+      if (selectedCircle) {
+        selectedCircle.attr("fill", "steelblue");
+      }
+      if (selectedOnLine) {
+        selectedOnLine.attr("fill", "steelblue");
+      }
+
+      selectedCircle = d3.select("circle[title =\'" + book.title + "\']");
+      selectedCircle.attr("fill", "salmon");
+      selectedOnLine = focus.select("circle[year =\'" + book.original_publication_year + "\']");
+      selectedOnLine.attr("fill", "salmon");
+      selectedDot = d3.selectAll("circle[year =\'" + book.key + "\']");
+      selectedDot.attr("fill", "salmon");
+      selectedBars = d3.selectAll("rect[year =\'" + book.key + "\']");
+      selectedBars.attr("fill", "salmon");
+      selectedBar = d3.select("rect[title =\'" + book.title + "\']");
+      selectedBar.attr("fill", "salmon");
+
     });
 
+    dispatch.on("MouseLeave", function(book) {
+      if (selectedBar) {
+        selectedBar.attr("fill", "steelblue");
+      }
+      if (selectedBars) {
+        selectedBars.attr("fill", "steelblue");
+      }
+      if (selectedDot) {
+        selectedDot.attr("fill", "steelblue");
+      }
+      if (selectedCircle) {
+        selectedCircle.attr("fill", "steelblue");
+      }
+      if (selectedOnLine) {
+        selectedOnLine.attr("fill", "steelblue");
+      }
+    })
 }
 
 
@@ -222,9 +272,15 @@ function brushended() {
     .attr("d", line);
 
   focus.selectAll(".dot").remove();
-  focus.selectAll("dot")
+  focus.selectAll("circle")
     .data(filterData(dataLine, xScale.domain()))
     .enter().append("circle")
+    .on("mouseover", function(d) {
+      dispatch.call("MouseOver", d, d);
+    })
+    .on("mouseleave", function(d) {
+      dispatch.call("MouseLeave", d, d);
+    })
     .attr("r", 2)
     .attr("class", "dot")
     .attr("cx", function(d) {
@@ -233,11 +289,10 @@ function brushended() {
     .attr("cy", function(d) {
       return yScale(d.value);
     })
-    .style("fill", "steelblue")
-    .append("title")
-    .text(function(d) {
-      return d.title;
-    });
+    .attr("year", function(d) {return d.key;})
+    .attr("fill", "steelblue");
+
+
   focus.select(".x.axis")
     .attr("transform", "translate(0," + (height + 5) + ")")
     .call(xAxis);
@@ -246,6 +301,12 @@ function brushended() {
   svgScat.selectAll("circle")
     .data(filterDataScat(dataScat, xScaleScat.domain()))
     .enter().append("circle")
+    .on("mouseover", function(d) {
+      dispatch.call("MouseOver", d, d);
+    })
+    .on("mouseleave", function(d) {
+      dispatch.call("MouseLeave", d, d);
+    })
     .attr("r", 3)
     .attr("class", "dot")
     .attr("fill", "steelblue")
@@ -259,12 +320,10 @@ function brushended() {
       return cx;
     })
     .attr("cy", function(d) {
-      return h - Math.floor(Math.random() * (h / 2 + 1)) - h / 4;
+      return heighScat - Math.floor(Math.random() * (heighScat / 2 + 1)) - heighScat / 4;
     })
-    .append("title")
-    .text(function(d) {
-      return d.title;
-    });
+    .attr("title", function(d) {return d.title;})
+    .attr("year", function(d) { return d.original_publication_year;});
   svgScat.select(".x.axis").call(xAxisScat);
 }
 
@@ -285,12 +344,12 @@ function filterDataScat(data, range) {
 
 function gen_scatterplot() {
   widthScat = 1200;
-  h = 100;
+  heighScat = 100;
 
   svgScat = d3.select("#scatterplot")
     .append("svg")
     .attr("width", widthScat)
-    .attr("height", h);
+    .attr("height", heighScat);
 
 
   var padding = 30;
@@ -317,7 +376,7 @@ function gen_scatterplot() {
 
   svgScat.append("g")
     .attr("class", "x axis")
-    .attr("transform", "translate(0," + (h - 20) + ")")
+    .attr("transform", "translate(0," + (heighScat - 20) + ")")
     .call(xAxisScat);
 
 
@@ -325,12 +384,17 @@ function gen_scatterplot() {
   svgScat.selectAll("circle")
     .data(filterDataScat(dataScat, xScaleScat.domain()))
     .enter().append("circle")
+    .on("mouseover", function(d) {
+      dispatch.call("MouseOver", d, d);
+    })
+    .on("mouseleave", function(d) {
+      dispatch.call("MouseLeave", d, d);
+    })
     .attr("r", 3)
     .attr("class", "dot")
     .attr("fill", "steelblue")
     .attr("opacity", "0.5")
     .attr("cx", function(d) {
-
       if (d.original_publication_year >= xScaleScat.domain()[1]) {
         cx = xScaleScat(d.original_publication_year)
       } else {
@@ -339,18 +403,16 @@ function gen_scatterplot() {
       return cx;
     })
     .attr("cy", function(d) {
-      return h - Math.floor(Math.random() * (h / 2 + 1)) - h / 4;
+      return heighScat - Math.floor(Math.random() * (heighScat / 2 + 1)) - heighScat / 4;
     })
-    .append("title")
-    .text(function(d) {
-      return d.title;
-    });
+    .attr("title", function(d) {return d.title;})
+    .attr("year", function(d) { return d.original_publication_year;});
 }
 
 
 function genBarChart() {
-  w = 900;
-  h = 300;
+  var w = 710;
+  var h = 300;
 
   svg = d3.select("#BarChart")
     .append("svg")
@@ -383,6 +445,12 @@ function genBarChart() {
   svg.selectAll("rect")
     .data(dataBar)
     .enter().append("rect") // for each item append a bar
+    .on("mouseover", function(d) {
+      dispatch.call("MouseOver", d, d);
+    })
+    .on("mouseleave", function(d) {
+      dispatch.call("MouseLeave", d, d);
+    })
     .attr("height", bar_h) // each bar width depends on the number of bars
     .attr("width", function(d) {
       return xScaleBar(d.work_ratings_count); // each bar height is a score
@@ -395,6 +463,8 @@ function genBarChart() {
       return padding; // fit to our scale
     })
     .attr("fill","steelblue")
+    .attr("title", function(d) { return d.title;})
+    .attr("year", function(d) { return d.original_publication_year;});
 
   svg.selectAll("rect").append("title") // add title to each bar
                        .data(dataBar)
