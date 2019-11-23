@@ -12,6 +12,14 @@
   color: white;
 }
 
+#BarChart {
+  align-items: flex-end;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  min-height: 271.66;
+}
+
 #FirstRow {
   display: flex;
   flex-flow: row wrap;
@@ -35,10 +43,11 @@
 }
 
 #Right {
-  align-items: flex-end;
+  align-items: stretch;
   background-color: white;
   display: flex;
   flex-direction: column;
+
 }
 
 #Left {
