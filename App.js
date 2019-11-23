@@ -374,15 +374,11 @@ function genBarChart() {
 
   xScaleBar = d3.scaleLinear()
     .domain([0, 5000000])
-    .range([padding, w - padding]);
+    .range([0, w - 2*padding]);
 
 
-  var yAxisBar = d3.axisLeft()
-    .scale(d3.scaleLinear()
-      .domain([dataBar[0].oscar_year, dataBar[dataBar.length - 1].oscar_year])
-      .range([padding + bar_w / 2, w - padding - bar_w / 2]))
-    .tickFormat(d3.format("d"))
-    .ticks(dataBar.length / 4);
+  var xaxis = d3.axisBottom() // create a d3 axis
+                .scale(xScaleBar);  // fit to our scale
 
   svg.selectAll("rect")
     .data(dataBar)
@@ -398,5 +394,14 @@ function genBarChart() {
     .attr("x", function(d) {
       return padding; // fit to our scale
     })
-    .append("title").text((d) => d.title);
+    .attr("fill","steelblue")
+
+  svg.selectAll("rect").append("title") // add title to each bar
+                       .data(dataBar)
+                       .text(function(d) {return d.title;});
+
+  svg.append("g") // create a 'g' element to match our 'y' axis
+    .attr("transform", "translate(30," + (h-padding) + ")")  // 30 is the padding
+    .attr("class","xaxis") // give css style
+    .call(xaxis);
 }
