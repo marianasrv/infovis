@@ -4,9 +4,9 @@ var xScaleOverview, xScale, yScale;
 var width;
 var line, xAxis;
 var focus;
+var height;
 
-
-d3.csv("project2.csv").then(function(data) {
+d3.csv("sample.csv").then(function(data) {
   //  full_dataScat = data;
   dataLine = data;
   dataScat = data;
@@ -32,33 +32,20 @@ function gen_lineChart() {
   });
   console.log(dataLine)
 
-  var margin = {
-      top: 10,
-      right: 10,
-      bottom: 100,
-      left: 40
-    },
-    margin2 = {
-      top: 130,
-      right: 10,
-      bottom: 20,
-      left: 40
-    },
-    height = 200 - margin.top - margin.bottom,
-    heightOverview = 200 - margin2.top - margin2.bottom;
-    width = 960 - margin.left - margin.right;
+
+    height = 100 ;
+    var heightOverview = 50;
+    width = 900 ;
 
    xScale = d3.scaleLinear()
-    .domain(d3.extent(dataLine.map(function(d) {
-      return d.key;
-    })))
-    .range([0, width]);
+    .domain([1990, 2010])
+    .range([20, width - 20]);
 
   xScaleOverview = d3.scaleLinear()
     .domain(d3.extent(dataLine.map(function(d) {
       return d.key;
     })))
-    .range([0, width]);
+    .range([20, width - 20]);
 
 
    xAxis = d3.axisBottom()
@@ -66,7 +53,7 @@ function gen_lineChart() {
     .tickFormat(d3.format("d"));
 
   var xAxisOverview = d3.axisBottom()
-    .scale(xScale)
+    .scale(xScaleOverview)
     .tickFormat(d3.format("d"));
 
   yScale = d3.scaleLinear()
@@ -83,8 +70,10 @@ function gen_lineChart() {
     .ticks(5);
 
   brush = d3.brushX()
-  //  .extent([[margin2.left,margin2.top],[width + margin2.left, heightOverview+ margin2.top]] )
+    .extent([[18,0], [881, 50]])
     .on("end", brushended);
+
+    //d3.select(this).transition().call(brush.move,  [2000, 2010].map(xScaleOverview));
 
    line = d3.line()
     .x(function(d) {
@@ -104,8 +93,8 @@ function gen_lineChart() {
 
   var svg = d3.select("#lineChart")
     .append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom);
+    .attr("width", width + 20)
+    .attr("height", height + heightOverview + 30);
 
   svg.append("defs").append("clipPath")
     .attr("id", "clip")
@@ -115,14 +104,15 @@ function gen_lineChart() {
 
   focus = svg.append("g")
     .attr("class", "focus")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    .attr("transform", "translate(0,0)");
 
   var context = svg.append("g")
     .attr("class", "context")
-    .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
+    .attr("height", heightOverview)
+    .attr("transform", "translate(0,130)");
 
   focus.append("path")
-    .datum(dataLine)
+    .datum(filterData(dataLine, xScale.domain()))
     .attr("class", "line")
     .style("fill", "none")
     .style("stroke", "steelblue")
@@ -130,15 +120,16 @@ function gen_lineChart() {
 
   focus.append("g")
     .attr("class", "y axis")
+    .attr("transform", "translate(20,5)")
     .call(yAxis);
 
   focus.append("g")
     .attr("class", "x axis")
-    .attr("transform", "translate(0," + height + ")")
+    .attr("transform", "translate(0," + (height+5) + ")")
     .call(xAxis);
 
     focus.selectAll("dot")
-      .data(dataLine)
+      .data(filterData(dataLine, xScale.domain()))
       .enter().append("circle")
       .attr("r", 2)
       .attr("class", "dot")
@@ -163,7 +154,7 @@ function gen_lineChart() {
 
   context.append("g")
     .attr("class", "x axis")
-    .attr("transform", "translate(0," + heightOverview + ")")
+    .attr("transform", "translate(0," + (heightOverview-20) + ")")
     .call(xAxisOverview);
 
   context.append("g")
@@ -176,7 +167,7 @@ function gen_lineChart() {
   context.selectAll("dot")
     .data(dataLine)
     .enter().append("circle")
-    .attr("r", 3)
+    .attr("r", 2)
     .attr("class", "dot")
     .attr("cx", function(d) {
       return xScaleOverview(d.key);
@@ -202,6 +193,7 @@ function gen_lineChart() {
       // unfortunate variable naming :-/
       var x0 = xScaleOverview.invert(a*width)
       var x1 = xScaleOverview.invert(b*width)
+      //const [x0, x1] = selection.map(d => Math.round(xScaleOverview.invert(d)));
       console.log("x0", x0)
       console.log("x1", x1)
       brush.extent([x0, x1])
@@ -221,38 +213,78 @@ function gen_lineChart() {
     const selection = d3.event.selection;
       if (!d3.event.sourceEvent || !selection) return;
       const [x0, x1] = selection.map(d => Math.round(xScaleOverview.invert(d)));
-
+      
       d3.select(this).transition().call(brush.move, x1 > x0 ? [x0, x1].map(xScaleOverview) : null);
       xScale.domain(d3.event.selection === null ? xScaleOverview.domain() : [x0, x1]);
       xScaleScat.domain(d3.event.selection === null ? xScaleOverview.domain() : [x0, x1]);
-      focus.select(".line").attr("d", line);
-      focus.selectAll(".dot")
-            .attr("r", 2)
-            .attr("cx", function(d) {
+
+      line = d3.line()
+            .x(function(d) {
                 return xScale(d.key);
               })
-            .attr("cy", function(d) {
+            .y(function(d) {
                 return yScale(d.value);
-            })
-            .style("fill", "steelblue")
-            .append("title")
-            .text(function(d) {
-                return d.title;
-            });
-      focus.select(".x.axis").call(xAxis);
-      svgScat.selectAll(".dot")
-              .attr("r", 3)
-              .attr("fill", "steelblue")
-              .attr("opacity", "0.5")
-              .attr("cx",function(d) {
-                //  if (d.original_publication_year == xscale().min) {return padding;}
-                return  xScaleScat(d.original_publication_year);
               })
-              .attr("cy", function(d) {
-                return h - Math.floor(Math.random() * (h/2+1)) - h/4;})
-              .append("title")
-              .text(function(d) { return d.title; });
+      focus.select(".line").remove();
+      focus.append("path")
+        .datum(filterData(dataLine, xScale.domain()))
+        .attr("class", "line")
+        .style("fill", "none")
+        .style("stroke", "steelblue")
+        .attr("d", line);
+
+      focus.selectAll(".dot").remove();
+      focus.selectAll("dot")
+        .data(filterData(dataLine, xScale.domain()))
+        .enter().append("circle")
+        .attr("r", 2)
+        .attr("class", "dot")
+        .attr("cx", function(d) {
+          return xScale(d.key);
+        })
+        .attr("cy", function(d) {
+          return yScale(d.value);
+        })
+        .style("fill", "steelblue")
+        .append("title")
+        .text(function(d) {
+          return d.title;
+        });
+      focus.select(".x.axis")
+            .attr("transform", "translate(0," + (height+5) + ")")
+            .call(xAxis);
+
+      svgScat.selectAll(".dot").remove();
+      svgScat.selectAll("circle")
+           .data(filterDataScat(dataScat, xScaleScat.domain()))
+           .enter().append("circle")
+           .attr("r", 3)
+           .attr("class", "dot")
+           .attr("fill", "steelblue")
+           .attr("opacity", "0.5")
+           .attr("cx",function(d) {
+             //  if (d.original_publication_year == xscale().min) {return padding;}
+                   return  xScaleScat(d.original_publication_year) + Math.floor(Math.random() * 20);
+             })
+           .attr("cy", function(d) {
+               return h - Math.floor(Math.random() * (h/2 +1)) - h/4;})
+           .append("title")
+             .text(function(d) { return d.title; });
       svgScat.select(".x.axis").call(xAxisScat);
+}
+
+function filterData(data, range) {
+
+  const result = data.filter(d => d.key >= range[0] && d.key <= range[1]);
+
+  return result;
+}
+
+function filterDataScat(data, range) {
+
+  const result = data.filter(d => d.original_publication_year >= range[0] && d.original_publication_year < range[1]);
+
+  return result;
 }
 
 function gen_scatterplot() {
@@ -276,7 +308,7 @@ function gen_scatterplot() {
 
 
     xScaleScat = d3.scaleLinear()
-                       .domain(d3.extent(dataScat, function(d) { return d.original_publication_year; }))
+                       .domain([1990, 2010])
                        .range([padding,w-padding]);
 
 
@@ -295,7 +327,7 @@ function gen_scatterplot() {
 
 
    svgScat.selectAll("circle")
-        .data(dataScat)
+        .data(filterDataScat(dataScat, xScaleScat.domain()))
         .enter().append("circle")
         .attr("r", 3)
         .attr("class", "dot")
@@ -303,7 +335,7 @@ function gen_scatterplot() {
         .attr("opacity", "0.5")
         .attr("cx",function(d) {
           //  if (d.original_publication_year == xscale().min) {return padding;}
-                return  xScaleScat(d.original_publication_year);
+                return  xScaleScat(d.original_publication_year) + Math.floor(Math.random() * 20);
           })
         .attr("cy", function(d) {
             return h - Math.floor(Math.random() * (h/2 +1)) - h/4;})
