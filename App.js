@@ -1,7 +1,7 @@
 var dataLine;
 var brush;
 var xScaleOverview, xScale, yScale;
-var width;
+var widthLine, widthScat;
 var line, xAxis;
 var focus;
 var height;
@@ -41,18 +41,18 @@ function gen_lineChart() {
 
   height = 100;
   var heightOverview = 50;
-  width = 900;
+  widthLine = 900;
   var padding = 30
 
   xScale = d3.scaleLinear()
     .domain([1950, 2015])
-    .range([padding, width - padding]);
+    .range([padding, widthLine - padding]);
 
   xScaleOverview = d3.scaleLinear()
     .domain(d3.extent(dataLine.map(function(d) {
       return d.key;
     })))
-    .range([padding, width - padding]);
+    .range([padding, widthLine - padding]);
 
 
   xAxis = d3.axisBottom()
@@ -79,7 +79,7 @@ function gen_lineChart() {
   brush = d3.brushX()
     .extent([
       [18, 0],
-      [881, 50]
+      [881, 57]
     ])
     .on("end", brushended);
 
@@ -103,13 +103,13 @@ function gen_lineChart() {
 
   var svg = d3.select("#lineChart")
     .append("svg")
-    .attr("width", width + 30)
+    .attr("width", widthLine + 30)
     .attr("height", height + heightOverview + 30);
 
   svg.append("defs").append("clipPath")
     .attr("id", "clip")
     .append("rect")
-    .attr("width", width)
+    .attr("width", widthLine)
     .attr("height", height);
 
   focus = svg.append("g")
@@ -200,11 +200,12 @@ function brushended() {
   const selection = d3.event.selection;
   if (!d3.event.sourceEvent || !selection) return;
   const [x0, x1] = selection.map(d => Math.round(xScaleOverview.invert(d)));
-
+  //console.log([x0, x1])
   d3.select(this).transition().call(brush.move, x1 > x0 ? [x0, x1].map(xScaleOverview) : null);
   xScale.domain(d3.event.selection === null ? xScaleOverview.domain() : [x0, x1]);
   xScaleScat.domain(d3.event.selection === null ? xScaleOverview.domain() : [x0, x1]);
 
+  console.log(xScaleScat.domain())
   line = d3.line()
     .x(function(d) {
       return xScale(d.key);
@@ -250,8 +251,14 @@ function brushended() {
     .attr("fill", "steelblue")
     .attr("opacity", "0.5")
     .attr("cx", function(d) {
-      //  if (d.original_publication_year == xscale().min) {return padding;}
-      return xScaleScat(d.original_publication_year) + Math.floor(Math.random() * 20);
+      console.log(d.original_publication_year)
+      if (d.original_publication_year >= xScaleScat.domain()[1]){
+        cx = xScaleScat(d.original_publication_year)
+      }
+      else {
+        cx = xScaleScat(d.original_publication_year) + Math.floor(Math.random() * (1140 / (xScaleScat.domain()[1] - xScaleScat.domain()[0])));
+      }
+      return cx;
     })
     .attr("cy", function(d) {
       return h - Math.floor(Math.random() * (h / 2 + 1)) - h / 4;
@@ -278,12 +285,12 @@ function filterDataScat(data, range) {
 }
 
 function gen_scatterplot() {
-  var w = 1200;
+  widthScat = 1200;
   h = 100;
 
   svgScat = d3.select("#scatterplot")
     .append("svg")
-    .attr("width", w)
+    .attr("width", widthScat)
     .attr("height", h);
 
 
@@ -299,7 +306,7 @@ function gen_scatterplot() {
 
   xScaleScat = d3.scaleLinear()
     .domain([1950, 2015])
-    .range([padding, w - padding]);
+    .range([padding, widthScat - padding]);
 
 
 
@@ -324,10 +331,15 @@ function gen_scatterplot() {
     .attr("fill", "steelblue")
     .attr("opacity", "0.5")
     .attr("cx", function(d) {
-      if (d.original_publication_year >= xScaleScat().min) {
-        return width - padding;
+      console.log(d.original_publication_year)
+
+      if (d.original_publication_year >= xScaleScat.domain()[1]){
+        cx = xScaleScat(d.original_publication_year)
       }
-      return xScaleScat(d.original_publication_year) + Math.floor(Math.random() * 20);
+      else {
+        cx = xScaleScat(d.original_publication_year) + Math.floor(Math.random() * (1140 / (xScaleScat.domain()[1] - xScaleScat.domain()[0])));
+      }
+      return cx;
     })
     .attr("cy", function(d) {
       return h - Math.floor(Math.random() * (h / 2 + 1)) - h / 4;
