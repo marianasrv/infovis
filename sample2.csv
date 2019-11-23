@@ -1,0 +1,93 @@
+title,authors,original_publication_year,average_rating,tag_id,book_id,books_count,work_ratings_count,work_text_reviews_count,tag_name
+"The Hunger Games (The Hunger Games, #1)",Suzanne Collins,2008,4.34,10,1,272,4942365,155254,fantasy
+"Harry Potter and the Sorcerer´s Stone (Harry Potter, #1)","J.K. Rowling, Mary GrandPré",1997,4.44,10,2,491,4800065,75867,fantasy
+"Twilight (Twilight, #1)",Stephenie Meyer,2005,3.57,10,3,226,3916824,95009,fantasy
+The Great Gatsby,F. Scott Fitzgerald,1925,3.89,10,5,1356,2773745,51992,fantasy
+The Fault in Our Stars,John Green,2012,4.26,10,6,226,2478609,140739,fantasy
+The Catcher in the Rye,J.D. Salinger,1951,3.79,10,8,360,2120637,44920,fantasy
+Pride and Prejudice,Jane Austen,1813,4.24,10,10,3455,2191465,49152,fantasy
+1984,"George Orwell, Erich Fromm, Celâl Üster",1949,4.14,25,13,995,2053394,45518,science fiction
+"Harry Potter and the Order of the Phoenix (Harry Potter, #5)","J.K. Rowling, Mary GrandPré",2003,4.46,12,21,307,1840548,28685,history
+"Harry Potter and the Goblet of Fire (Harry Potter, #4)","J.K. Rowling, Mary GrandPré",2000,4.53,16,24,332,1868642,31084,nonfiction
+"Harry Potter and the Deathly Hallows (Harry Potter, #7)","J.K. Rowling, Mary GrandPré",2007,4.61,16,25,263,1847395,51942,nonfiction
+"The Da Vinci Code (Robert Langdon, #2)",Dan Brown,2003,3.79,27,26,350,1557292,41560,travel
+"Harry Potter and the Half-Blood Prince (Harry Potter, #6)","J.K. Rowling, Mary GrandPré",2005,4.54,27,27,275,1785676,27520,travel
+Lord of the Flies,William Golding,1954,3.64,16,28,458,1671484,26886,nonfiction
+Romeo and Juliet,"William Shakespeare, Robert           Jackson",1595,3.73,16,29,1937,1672889,14778,nonfiction
+Gone Girl,Gillian Flynn,2012,4.03,10,30,196,1626519,121614,fantasy
+Memoirs of a Geisha,Arthur Golden,1997,4.08,10,33,220,1418172,25605,fantasy
+"Fifty Shades of Grey (Fifty Shades, #1)",E.L. James,2011,3.67,10,34,169,1436818,75437,fantasy
+"The Giver (The Giver, #1)",Lois Lowry,1993,4.12,10,36,192,1345445,54084,fantasy
+Where the Sidewalk Ends,Shel Silverstein,1974,4.29,11,50,45,1023781,9234,fiction
+A Thousand Splendid Suns,Khaled Hosseini,2007,4.34,11,67,197,866065,43645,fiction
+The Secret Garden,Frances Hodgson Burnett,1911,4.12,5,93,1350,692249,13054,classics
+"The Girl Who Played with Fire (Millennium, #2)","Stieg Larsson, Reg Keeland",2006,4.22,16,98,209,649253,31423,nonfiction
+"Allegiant (Divergent, #3)",Veronica Roth,2013,3.63,25,105,153,663226,62536,science fiction
+Bossypants,Tina Fey,2011,3.94,10,106,48,609260,35142,fantasy
+"Me Before You (Me Before You, #1)",Jojo Moyes,2012,4.27,25,112,168,741133,71412,science fiction
+"A Wrinkle in Time (A Wrinkle in Time Quintet, #1)",Madeleine L´Engle,1962,4.04,25,117,165,650094,19413,science fiction
+The Handmaid´s Tale,Margaret Atwood,1985,4.06,10,119,236,683564,35925,fantasy
+"Wicked: The Life and Times of the Wicked Witch of the West (The Wicked Years, #1)","Gregory Maguire, Douglas Smith",1995,3.52,11,122,80,525498,22926,fiction
+Sarah´s Key,Tatiana de Rosnay,2007,4.14,11,231,117,347631,26614,fiction
+Extremely Loud and Incredibly Close,Jonathan Safran Foer,2005,3.97,11,249,104,319116,21107,fiction
+Wonder,R.J. Palacio,2012,4.43,11,250,124,377791,43021,fiction
+The Sun Also Rises,Ernest Hemingway,1926,3.83,5,264,343,303117,9826,classics
+An Abundance of Katherines,John Green,2006,3.63,11,275,116,347424,20657,fiction
+Cutting for Stone,Abraham Verghese,2009,4.28,21,291,74,281079,23146,poetry
+11/22/63,Stephen King,2011,4.29,5,295,145,303057,30656,classics
+I Know This Much Is True,Wally Lamb,1998,4.17,5,304,52,257608,7775,classics
+"Where´d You Go, Bernadette",Maria Semple,2012,3.9,5,320,78,268153,28973,classics
+The Runaway Jury,John Grisham,1996,3.96,11,343,120,226861,1700,fiction
+We Were Liars,E. Lockhart,2014,3.85,25,348,77,298780,36910,science fiction
+Fear and Loathing in Las Vegas,"Hunter S. Thompson, Ralph Steadman",1971,4.08,25,350,98,242140,5021,science fiction
+Othello,William Shakespeare,1603,3.88,25,353,1053,256757,4334,science fiction
+"Graceling (Graceling Realm, #1)",Kristin Cashore,2008,4.1,25,355,87,296630,19081,science fiction
+All Quiet on the Western Front,"Erich Maria Remarque, A.W. Wheen",1929,3.92,10,357,372,265789,6947,fantasy
+And the Mountains Echoed,Khaled Hosseini,2012,4.03,25,359,135,229116,24084,science fiction
+V for Vendetta,"Alan Moore, David   Lloyd",1990,4.25,10,365,72,220640,4138,fantasy
+The Namesake,Jhumpa Lahiri,2003,3.96,10,378,93,192903,9824,fantasy
+"Island of the Blue Dolphins (Island of the Blue Dolphins, #1)",Scott O´Dell,1960,3.8,14,386,127,245968,6699,memoir
+Neuromancer,William Gibson,1984,3.88,11,400,143,202417,6623,fiction
+"Evermore (The Immortals, #1)",Alyson Noel,2009,3.59,11,415,78,235704,9228,fiction
+The Name of the Rose,"Umberto Eco, William Weaver, Seán Barrett",1980,4.11,16,424,428,224974,6075,nonfiction
+"The Mark of Athena (The Heroes of Olympus, #3)",Rick Riordan,2012,4.47,11,428,65,293586,13332,fiction
+"Red Dragon (Hannibal Lecter, #1)",Thomas Harris,1981,4.01,11,431,191,205433,3309,fiction
+"I, Robot (Robot #0.1)",Isaac Asimov,1950,4.17,11,432,218,210219,4335,fiction
+A Study in Scarlet,Arthur Conan Doyle,1887,4.15,11,446,1106,220115,6954,fiction
+"Brisingr (The Inheritance Cycle, #3)",Christopher Paolini,2008,4.03,11,447,143,226941,7993,fiction
+"Betrayed (House of Night, #2)","P.C. Cast, Kristin Cast",2007,3.93,11,449,80,213261,4993,fiction
+A Streetcar Named Desire,Tennessee Williams,1947,3.97,11,456,109,206983,2841,fiction
+"Where She Went (If I Stay, #2)",Gayle Forman,2011,4.06,16,475,8,218362,18556,nonfiction
+Don Quixote,"Miguel de Cervantes Saavedra, Roberto González Echevarría, John Rutherford",1605,3.85,16,597,1887,159253,5429,nonfiction
+"The Restaurant at the End of the Universe (Hitchhiker´s Guide, #2)",Douglas Adams,1980,4.22,16,599,162,172365,3851,nonfiction
+"Are You There God? It´s Me, Margaret",Judy Blume,1970,3.89,16,621,75,162083,5168,nonfiction
+Veronika Decides to Die,"Paulo Coelho, Margaret Jull Costa",1998,3.69,,629,229,132191,6063,philosophy
+Baby Proof,Emily Giffin,2006,3.71,16,647,43,129325,3375,nonfiction
+"I´d Tell You I Love You, But Then I´d Have to Kill You (Gallagher Girls, #1)",Ally Carter,2006,3.82,5,656,58,157885,6720,classics
+Interpreter of Maladies,Jhumpa Lahiri,1999,4.12,11,662,83,125062,8145,fiction
+"The Passage (The Passage, #1)",Justin Cronin,2010,4.04,,665,101,145772,16506,philosophy
+Along for the Ride,Sarah Dessen,2009,4.08,11,667,41,156330,6238,fiction
+Everything I Never Told You,Celeste Ng,2014,3.78,5,668,62,134550,15177,classics
+"Entwined with You (Crossfire, #3)",Sylvia Day,2013,4.19,21,676,76,157731,9728,poetry
+The Silver Linings Playbook,Matthew Quick,2008,4,11,698,75,129408,11059,fiction
+Bag of Bones,Stephen King,1998,3.87,11,703,134,137867,3087,fiction
+Around the World in Eighty Days,"Jules Verne, Michael Glencross, Brian W. Aldiss",1872,3.9,13,706,1903,141132,4341,humor
+"Ender´s Shadow (Ender´s Shadow, #1)",Orson Scott Card,1998,4.3,11,760,63,125744,4587,fiction
+"Wolf Hall (Thomas Cromwell, #1)",Hilary Mantel,2009,3.85,11,816,2,118705,12827,fiction
+The Sense of an Ending,Julian Barnes,2011,3.7,11,822,110,114025,12966,fiction
+"A is for Alibi (Kinsey Millhone, #1)",Sue Grafton,1982,3.82,11,823,81,121225,3236,fiction
+Shanghai Girls (Shanghai Girls #1),Lisa See,2009,3.87,11,825,52,114862,8654,fiction
+"To All the Boys I´ve Loved Before (To All the Boys I´ve Loved Before, #1)",Jenny Han,2014,4.11,25,827,60,151311,17356,science fiction
+The DUFF: Designated Ugly Fat Friend,Kody Keplinger,2010,3.86,25,830,53,146547,11130,science fiction
+"Shōgun (Asian Saga, #1)",James Clavell,1975,4.37,16,840,120,115527,3075,nonfiction
+Night Shift,"Stephen King, John D. MacDonald",1978,3.96,11,865,119,112357,2038,fiction
+Team of Rivals: The Political Genius of Abraham Lincoln,"Doris Kearns Goodwin, Suzanne Toren",2005,4.3,20,870,40,107944,5875,manga
+"The Summoning (Darkest Powers, #1)",Kelley Armstrong,2008,4.03,11,880,52,136832,5830,fiction
+Second Foundation (Foundation #3),Isaac Asimov,1953,4.23,5,890,146,105839,1675,classics
+The Selfish Gene,Richard Dawkins,1976,4.11,16,900,104,101017,2460,nonfiction
+"The Black Echo (Harry Bosch, #1; Harry Bosch Universe, #1)",Michael Connelly,1992,4.08,15,902,130,108388,3068,mystery
+Anthem,Ayn Rand,1938,3.62,11,903,460,106766,7096,fiction
+"Shopaholic & Baby (Shopaholic, #5)",Sophie Kinsella,2007,3.77,16,952,80,103621,2434,nonfiction
+"The Gathering Storm (Wheel of Time, #12)","Robert Jordan, Brandon Sanderson",2009,4.34,11,960,2,100343,2582,fiction
+Cleopatra: A Life,Stacy Schiff,2006,3.62,11,968,55,76685,4534,fiction
+The Monster at the End of this Book,"Jon Stone, Michael J. Smollin",1971,4.45,16,998,23,104970,2504,nonfiction
