@@ -1,4 +1,4 @@
-var dataLine;
+var dataLine, dataScat, dataBar;
 var brush;
 var xScaleOverview, xScale, yScale;
 var widthLine, widthScat;
@@ -10,10 +10,12 @@ d3.csv("sample.csv").then(function(data) {
   //  full_dataScat = data;
   dataLine = data;
   dataScat = data;
+  dataBar = data.slice(0, 5);
   //  dispatch = d3.dispatch("bookEnter");
 
   gen_lineChart();
   gen_scatterplot();
+  genBarChart();
 });
 
 function gen_lineChart() {
@@ -36,7 +38,6 @@ function gen_lineChart() {
   dataLine.sort(function(a, b) {
     return d3.ascending(a.key, b.key);
   });
-  console.log(dataLine)
 
 
   height = 100;
@@ -205,7 +206,6 @@ function brushended() {
   xScale.domain(d3.event.selection === null ? xScaleOverview.domain() : [x0, x1]);
   xScaleScat.domain(d3.event.selection === null ? xScaleOverview.domain() : [x0, x1]);
 
-  console.log(xScaleScat.domain())
   line = d3.line()
     .x(function(d) {
       return xScale(d.key);
@@ -251,11 +251,9 @@ function brushended() {
     .attr("fill", "steelblue")
     .attr("opacity", "0.5")
     .attr("cx", function(d) {
-      console.log(d.original_publication_year)
-      if (d.original_publication_year >= xScaleScat.domain()[1]){
+      if (d.original_publication_year >= xScaleScat.domain()[1]) {
         cx = xScaleScat(d.original_publication_year)
-      }
-      else {
+      } else {
         cx = xScaleScat(d.original_publication_year) + Math.floor(Math.random() * (1140 / (xScaleScat.domain()[1] - xScaleScat.domain()[0])));
       }
       return cx;
@@ -283,6 +281,7 @@ function filterDataScat(data, range) {
 
   return result;
 }
+
 
 function gen_scatterplot() {
   widthScat = 1200;
@@ -331,12 +330,10 @@ function gen_scatterplot() {
     .attr("fill", "steelblue")
     .attr("opacity", "0.5")
     .attr("cx", function(d) {
-      console.log(d.original_publication_year)
 
-      if (d.original_publication_year >= xScaleScat.domain()[1]){
+      if (d.original_publication_year >= xScaleScat.domain()[1]) {
         cx = xScaleScat(d.original_publication_year)
-      }
-      else {
+      } else {
         cx = xScaleScat(d.original_publication_year) + Math.floor(Math.random() * (1140 / (xScaleScat.domain()[1] - xScaleScat.domain()[0])));
       }
       return cx;
@@ -348,5 +345,58 @@ function gen_scatterplot() {
     .text(function(d) {
       return d.title;
     });
+}
 
+
+function genBarChart() {
+  w = 900;
+  h = 300;
+
+  svg = d3.select("#BarChart")
+    .append("svg")
+    .attr("width", w)
+    .attr("height", h);
+
+  var padding = 30;
+  var bar_w = Math.floor((w - padding * 2) / dataBar.length) - 1;
+  var bar_h = Math.floor((h - padding * 2) / dataBar.length) - 1;
+
+  dataBar.forEach(function(d, i) {
+    d.work_ratings_count = +d.work_ratings_count;
+  });
+  dataBar = dataBar.sort(function(a, b) {
+    return d3.descending(a.work_ratings_count, b.work_ratings_count);
+  });
+
+  yScaleBar = d3.scaleLinear()
+    .domain([0, dataBar.length])
+    .range([h - padding, padding]);
+
+  xScaleBar = d3.scaleLinear()
+    .domain([0, 5000000])
+    .range([padding, w - padding]);
+
+
+  var yAxisBar = d3.axisLeft()
+    .scale(d3.scaleLinear()
+      .domain([dataBar[0].oscar_year, dataBar[dataBar.length - 1].oscar_year])
+      .range([padding + bar_w / 2, w - padding - bar_w / 2]))
+    .tickFormat(d3.format("d"))
+    .ticks(dataBar.length / 4);
+
+  svg.selectAll("rect")
+    .data(dataBar)
+    .enter().append("rect") // for each item append a bar
+    .attr("height", bar_h) // each bar width depends on the number of bars
+    .attr("width", function(d) {
+      return xScaleBar(d.work_ratings_count); // each bar height is a score
+    })
+    .attr("fill", "purple")
+    .attr("y", function(d, i) { // d -> each item | i -> each item's index
+      return h - yScaleBar(i); // set each bar position
+    })
+    .attr("x", function(d) {
+      return padding; // fit to our scale
+    })
+    .append("title").text((d) => d.title);
 }
