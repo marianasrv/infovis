@@ -80,8 +80,8 @@ function genLineChart() {
   });
 
 
-  height = 100;
-  var heightOverview = 50;
+  height = 120;
+  var heightOverview = 60;
   widthLine = 710;
   var padding = 30
 
@@ -120,7 +120,7 @@ function genLineChart() {
   brush = d3.brushX()
     .extent([
       [30, 0],
-      [widthLine - 29, 57]
+      [widthLine - 29, 40]
     ])
     .on("end", brushended);
 
@@ -159,7 +159,7 @@ function genLineChart() {
   var context = svg.append("g")
     .attr("class", "context")
     .attr("height", heightOverview)
-    .attr("transform", "translate(30,130)");
+    .attr("transform", "translate(30,150)");
 
   focus.append("path")
     .datum(filterData(dataLine, xScale.domain()))
@@ -199,6 +199,15 @@ function genLineChart() {
     .attr("fill", "#5C9AA8")
     .attr("year", function(d) { return d.key;});
 
+    focus.append("text")
+     .attr("transform", "rotate(-90)")
+     .attr("y", -3)
+     .attr("x",0 - (height / 2))
+     .attr("dy", "1em")
+     .style("text-anchor", "middle")
+     .style("font-size", 10)
+     .text("Average Rating");
+
 
   context.append("path")
     .datum(dataLine)
@@ -209,7 +218,7 @@ function genLineChart() {
 
   context.append("g")
     .attr("class", "x axis")
-    .attr("transform", "translate(0," + (heightOverview - padding) + ")")
+    .attr("transform", "translate(0," + (20) + ")")
     .call(xAxisOverview);
 
   context.append("g")
@@ -219,6 +228,14 @@ function genLineChart() {
     .selectAll("rect")
     .attr("y", -6)
     .attr("height", heightOverview + 7);
+
+    context.append("text")
+     .attr("transform",
+           "translate(" + (widthLine/2) + " ," +
+                          (heightOverview - 12) + ")")
+     .style("text-anchor", "middle")
+     .style("font-size", 10)
+     .text("Publication Year");
 
   context.selectAll("dot")
     .data(dataLine)
@@ -417,7 +434,7 @@ function filterDataScat(data, range) {
 
 function genScatterplot() {
   widthScat = 1200;
-  heighScat = 100;
+  heighScat = 120;
 
   svgScat = d3.select("#scatterplot")
     .append("svg")
@@ -449,9 +466,16 @@ function genScatterplot() {
 
   svgScat.append("g")
     .attr("class", "x axis")
-    .attr("transform", "translate(0," + (heighScat - 20) + ")")
+    .attr("transform", "translate(0," + (heighScat - 40) + ")")
     .call(xAxisScat);
 
+  svgScat.append("text")
+     .attr("transform",
+           "translate(" + (widthScat/2) + " ," +
+                          (heighScat - 10) + ")")
+     .style("text-anchor", "middle")
+     .style("font-size", 10)
+     .text("Publication Year");
 
 
   svgScat.selectAll("circle")
@@ -482,7 +506,7 @@ function genScatterplot() {
       return cx;
     })
     .attr("cy", function(d) {
-      return heighScat - Math.floor(Math.random() * (heighScat / 2 + 1)) - heighScat / 4;
+      return heighScat - 20 - Math.floor(Math.random() * (heighScat / 2 + 1)) - heighScat / 4;
     })
     .attr("title", function(d) {return d.title;})
     .attr("year", function(d) { return d.original_publication_year;});
