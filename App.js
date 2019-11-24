@@ -6,22 +6,59 @@ var line, xAxis;
 var focus;
 var height;
 var dispatch;
-var selectedBar, selectedBars, selectedDot, selectedCircle, selectedOnLine;
+var selectedBar, selectedBars, selectedDotsOnScat, selectedCircle, selectedOnLine, selectedDotOnLine;
+var tooltip, showTooltip, hideTooltip, moveTooltip;
 
 d3.csv("sample2.csv").then(function(data) {
-  //  full_dataScat = data;
+  //full_dataScat = data;
   dataLine = data;
   dataScat = data;
   dataBar = data.slice(0, 5);
   dispatch = d3.dispatch("MouseOver", "MouseLeave");
 
+  tooltip = d3.select("body")
+      .append("div")
+      .style("opacity", 0)
+      .attr("class", "tooltip")
+      .style("background-color", "black")
+      .style("color", "white")
+      .style("border-radius", "5px")
+      .style("padding", "10px")
+      .style("position", "absolute")
 
-  gen_lineChart();
-  gen_scatterplot();
+    // A function that change this tooltip when the user hover a point.
+    // Its opacity is set to 1: we can now see it. Plus it set the text and position of tooltip depending on the datapoint (d)
+  showTooltip = function(d) {
+      tooltip
+        .transition()
+        .duration(100)
+        .style("opacity", .8)
+      tooltip
+        .html(d.title)
+        .style("left", (d3.event.pageX) + "px")
+        .style("top", (d3.event.pageY) + "px")
+  }
+  moveTooltip = function(d) {
+      tooltip
+      .style("left", (d3.event.pageX)+ 10 + "px")
+      .style("top", (d3.event.pageY)+ 10  + "px")
+  }
+    // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
+  hideTooltip = function(d) {
+      tooltip
+        .transition()
+        .duration(100)
+        .style("opacity", 0)
+  }
+
+  genLineChart();
+  genScatterplot();
   genBarChart();
+
+
 });
 
-function gen_lineChart() {
+function genLineChart() {
 
 
   dataLine = d3.nest()
@@ -68,7 +105,7 @@ function gen_lineChart() {
     .tickFormat(d3.format("d"));
 
   yScale = d3.scaleLinear()
-    .domain([0, 5])
+    .domain([3, 5])
     .range([height, 0]);
 
   var yScaleOverview = d3.scaleLinear()
@@ -78,12 +115,12 @@ function gen_lineChart() {
   var yAxis = d3.axisLeft()
     .scale(yScale)
     .tickFormat(d3.format("d"))
-    .ticks(5);
+    .ticks(2);
 
   brush = d3.brushX()
     .extent([
       [30, 0],
-      [widthLine - 30, 57]
+      [widthLine - 29, 57]
     ])
     .on("end", brushended);
 
@@ -128,7 +165,7 @@ function gen_lineChart() {
     .datum(filterData(dataLine, xScale.domain()))
     .attr("class", "line")
     .style("fill", "none")
-    .style("stroke", "steelblue")
+    .style("stroke", "#5C9AA8")
     .attr("d", line);
 
   focus.append("g")
@@ -150,7 +187,7 @@ function gen_lineChart() {
     .on("mouseleave", function(d) {
       dispatch.call("MouseLeave", d, d);
     })
-    .attr("r", 2)
+    .attr("r", 3.5)
     .attr("class", "dot")
     .attr("title", function(d) {return d.title;})
     .attr("cx", function(d) {
@@ -159,7 +196,7 @@ function gen_lineChart() {
     .attr("cy", function(d) {
       return yScale(d.value);
     })
-    .attr("fill", "steelblue")
+    .attr("fill", "#5C9AA8")
     .attr("year", function(d) { return d.key;});
 
 
@@ -186,7 +223,7 @@ function gen_lineChart() {
   context.selectAll("dot")
     .data(dataLine)
     .enter().append("circle")
-    .attr("r", 2)
+    .attr("r", 1.5)
     .attr("class", "dot")
     .attr("cx", function(d) {
       return xScaleOverview(d.key);
@@ -198,51 +235,78 @@ function gen_lineChart() {
 
     dispatch.on("MouseOver", function(book) {
       if (selectedBar) {
-        selectedBar.attr("fill", "steelblue");
+        selectedBar.attr("fill", "#5C9AA8");
       }
       if (selectedBars) {
-        selectedBars.attr("fill", "steelblue");
+        selectedBars.attr("fill", "#5C9AA8");
       }
-      if (selectedDot) {
-        selectedDot.attr("fill", "steelblue");
+      if (selectedDotsOnScat) {
+        selectedDotsOnScat.attr("fill", "#5C9AA8");
+        selectedDotsOnScat.attr("opacity", 0.5);
+        selectedDotsOnScat.attr("r", 3);
+      }
+      if (selectedDotOnLine) {
+        selectedDotOnLine.attr("fill", "#5C9AA8");
       }
       if (selectedCircle) {
-        selectedCircle.attr("fill", "steelblue");
+        selectedCircle.attr("fill", "#5C9AA8");
+        selectedCircle.attr("opacity", 0.5);
+        selectedCircle.attr("r", 3);
       }
       if (selectedOnLine) {
-        selectedOnLine.attr("fill", "steelblue");
+        selectedOnLine.attr("fill", "#5C9AA8");
       }
 
+
       selectedCircle = d3.select("circle[title =\'" + book.title + "\']");
-      selectedCircle.attr("fill", "salmon");
+      selectedCircle.attr("opacity", 1);
+      selectedCircle.attr("r", 5);
+      selectedCircle.attr("fill", "#F1A758");
+
       selectedOnLine = focus.select("circle[year =\'" + book.original_publication_year + "\']");
-      selectedOnLine.attr("fill", "salmon");
-      selectedDot = d3.selectAll("circle[year =\'" + book.key + "\']");
-      selectedDot.attr("fill", "salmon");
+      selectedOnLine.attr("fill", "#F1A758");
+
+      selectedDotsOnScat = svgScat.selectAll("circle[year =\'" + book.key + "\']");
+      selectedDotsOnScat.attr("opacity", 1);
+      selectedDotsOnScat.attr("r", 5);
+      selectedDotsOnScat.attr("fill", "#F1A758");
+
+      selectedDotOnLine = focus.select("circle[year =\'" + book.key + "\']");
+      selectedDotOnLine.attr("fill", "#F1A758");
+
       selectedBars = d3.selectAll("rect[year =\'" + book.key + "\']");
-      selectedBars.attr("fill", "salmon");
+      selectedBars.attr("fill", "#F1A758");
       selectedBar = d3.select("rect[title =\'" + book.title + "\']");
-      selectedBar.attr("fill", "salmon");
+      selectedBar.attr("fill", "#F1A758");
 
     });
 
     dispatch.on("MouseLeave", function(book) {
       if (selectedBar) {
-        selectedBar.attr("fill", "steelblue");
+        selectedBar.attr("fill", "#5C9AA8");
       }
       if (selectedBars) {
-        selectedBars.attr("fill", "steelblue");
+        selectedBars.attr("fill", "#5C9AA8");
       }
-      if (selectedDot) {
-        selectedDot.attr("fill", "steelblue");
+      if (selectedDotsOnScat) {
+        selectedDotsOnScat.attr("fill", "#5C9AA8");
+        selectedDotsOnScat.attr("opacity", 0.5);
+        selectedDotsOnScat.attr("r", 3);
       }
       if (selectedCircle) {
-        selectedCircle.attr("fill", "steelblue");
+        selectedCircle.attr("fill", "#5C9AA8");
+        selectedCircle.attr("opacity", 0.5);
+        selectedCircle.attr("r", 3);
       }
       if (selectedOnLine) {
-        selectedOnLine.attr("fill", "steelblue");
+        selectedOnLine.attr("fill", "#5C9AA8");
+      }
+      if (selectedDotOnLine) {
+        selectedDotOnLine.attr("fill", "#5C9AA8");
       }
     })
+
+
 }
 
 
@@ -252,7 +316,7 @@ function brushended() {
   if (!d3.event.sourceEvent || !selection) return;
   const [x0, x1] = selection.map(d => Math.round(xScaleOverview.invert(d)));
   //console.log([x0, x1])
-  if (x0 != xScale.domain()[0] && x1 != xScale.domain()[1]) {
+  if (x0 != xScale.domain()[0] || x1 != xScale.domain()[1]) {
     d3.select(this).transition().call(brush.move, x1 > x0 ? [x0, x1].map(xScaleOverview) : null);
     xScale.domain(d3.event.selection === null ? xScaleOverview.domain() : [x0, x1]);
     xScaleScat.domain(d3.event.selection === null ? xScaleOverview.domain() : [x0, x1]);
@@ -269,7 +333,7 @@ function brushended() {
       .datum(filterData(dataLine, xScale.domain()))
       .attr("class", "line")
       .style("fill", "none")
-      .style("stroke", "steelblue")
+      .style("stroke", "#5C9AA8")
       .attr("d", line);
 
     focus.selectAll(".dot").remove();
@@ -282,7 +346,7 @@ function brushended() {
       .on("mouseleave", function(d) {
         dispatch.call("MouseLeave", d, d);
       })
-      .attr("r", 2)
+      .attr("r", 3.5)
       .attr("class", "dot")
       .attr("cx", function(d) {
         return xScale(d.key);
@@ -291,7 +355,7 @@ function brushended() {
         return yScale(d.value);
       })
       .attr("year", function(d) {return d.key;})
-      .attr("fill", "steelblue");
+      .attr("fill", "#5C9AA8");
 
 
     focus.select(".x.axis")
@@ -304,13 +368,19 @@ function brushended() {
       .enter().append("circle")
       .on("mouseover", function(d) {
         dispatch.call("MouseOver", d, d);
+        showTooltip(d);
       })
       .on("mouseleave", function(d) {
         dispatch.call("MouseLeave", d, d);
+        hideTooltip(d);
+      })
+      .on("mousemove", function(d) {
+        dispatch.call("MouseOver", d, d);
+        moveTooltip(d);
       })
       .attr("r", 3)
       .attr("class", "dot")
-      .attr("fill", "steelblue")
+      .attr("fill", "#5C9AA8")
       .attr("opacity", "0.5")
       .attr("cx", function(d) {
         if (d.original_publication_year >= xScaleScat.domain()[1]) {
@@ -332,7 +402,7 @@ function brushended() {
 
 function filterData(data, range) {
 
-  const result = data.filter(d => d.key >= range[0] && d.key <= range[1]);
+  const result = data.filter(d => d.key >= range[0] && d.key < range[1]);
 
   return result;
 }
@@ -345,7 +415,7 @@ function filterDataScat(data, range) {
 }
 
 
-function gen_scatterplot() {
+function genScatterplot() {
   widthScat = 1200;
   heighScat = 100;
 
@@ -389,13 +459,19 @@ function gen_scatterplot() {
     .enter().append("circle")
     .on("mouseover", function(d) {
       dispatch.call("MouseOver", d, d);
+      showTooltip(d);
     })
     .on("mouseleave", function(d) {
       dispatch.call("MouseLeave", d, d);
+      hideTooltip(d);
+    })
+    .on("mousemove", function(d) {
+      dispatch.call("MouseOver", d, d);
+      moveTooltip(d);
     })
     .attr("r", 3)
     .attr("class", "dot")
-    .attr("fill", "steelblue")
+    .attr("fill", "#5C9AA8")
     .attr("opacity", "0.5")
     .attr("cx", function(d) {
       if (d.original_publication_year >= xScaleScat.domain()[1]) {
@@ -410,6 +486,7 @@ function gen_scatterplot() {
     })
     .attr("title", function(d) {return d.title;})
     .attr("year", function(d) { return d.original_publication_year;});
+
 }
 
 
@@ -450,9 +527,15 @@ function genBarChart() {
     .enter().append("rect") // for each item append a bar
     .on("mouseover", function(d) {
       dispatch.call("MouseOver", d, d);
+      showTooltip(d);
     })
     .on("mouseleave", function(d) {
       dispatch.call("MouseLeave", d, d);
+      hideTooltip(d);
+    })
+    .on("mousemove", function(d) {
+      dispatch.call("MouseOver", d, d);
+      moveTooltip(d);
     })
     .attr("height", bar_h) // each bar width depends on the number of bars
     .attr("width", function(d) {
@@ -465,16 +548,18 @@ function genBarChart() {
     .attr("x", function(d) {
       return padding; // fit to our scale
     })
-    .attr("fill","steelblue")
+    .attr("fill","#5C9AA8")
     .attr("title", function(d) { return d.title;})
-    .attr("year", function(d) { return d.original_publication_year;});
+    .attr("year", function(d) { return d.original_publication_year;})
 
-  svg.selectAll("rect").append("title") // add title to each bar
-                       .data(dataBar)
-                       .text(function(d) {return d.title;});
+
 
   svg.append("g") // create a 'g' element to match our 'y' axis
     .attr("transform", "translate(30," + (h-padding) + ")")  // 30 is the padding
     .attr("class","xaxis") // give css style
     .call(xaxis);
+
+
+
+
 }

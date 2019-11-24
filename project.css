@@ -3,6 +3,7 @@
   flex-flow: column wrap;
   font-weight: bold;
   text-align: center;
+
 }
 
 .AppHeader {
@@ -22,7 +23,7 @@
 
 #FirstRow {
   display: flex;
-  flex-flow: row wrap;
+  flex-flow: row nowrap;
   text-align: center;
 }
 
@@ -51,7 +52,7 @@
 }
 
 #Left {
-  background-color:salmon;
+  background-color:#5C9AA8;
   display: flex;
 }
 
@@ -63,9 +64,10 @@
 }
 
 #Menus {
-  background-color:steelblue;
-  max-height:120;
-  max-width:200;
+  display: flex;
+  background-color:#5C9AA8;
+  flex-flow: column nowrap;
+  min-height: 120;
 }
 
 
@@ -87,5 +89,5 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #F5F5F5;
+  background: white;
 }
