@@ -252,79 +252,82 @@ function brushended() {
   if (!d3.event.sourceEvent || !selection) return;
   const [x0, x1] = selection.map(d => Math.round(xScaleOverview.invert(d)));
   //console.log([x0, x1])
-  d3.select(this).transition().call(brush.move, x1 > x0 ? [x0, x1].map(xScaleOverview) : null);
-  xScale.domain(d3.event.selection === null ? xScaleOverview.domain() : [x0, x1]);
-  xScaleScat.domain(d3.event.selection === null ? xScaleOverview.domain() : [x0, x1]);
+  if (x0 != xScale.domain()[0] && x1 != xScale.domain()[1]) {
+    d3.select(this).transition().call(brush.move, x1 > x0 ? [x0, x1].map(xScaleOverview) : null);
+    xScale.domain(d3.event.selection === null ? xScaleOverview.domain() : [x0, x1]);
+    xScaleScat.domain(d3.event.selection === null ? xScaleOverview.domain() : [x0, x1]);
 
-  line = d3.line()
-    .x(function(d) {
-      return xScale(d.key);
-    })
-    .y(function(d) {
-      return yScale(d.value);
-    })
-  focus.select(".line").remove();
-  focus.append("path")
-    .datum(filterData(dataLine, xScale.domain()))
-    .attr("class", "line")
-    .style("fill", "none")
-    .style("stroke", "steelblue")
-    .attr("d", line);
+    line = d3.line()
+      .x(function(d) {
+        return xScale(d.key);
+      })
+      .y(function(d) {
+        return yScale(d.value);
+      })
+    focus.select(".line").remove();
+    focus.append("path")
+      .datum(filterData(dataLine, xScale.domain()))
+      .attr("class", "line")
+      .style("fill", "none")
+      .style("stroke", "steelblue")
+      .attr("d", line);
 
-  focus.selectAll(".dot").remove();
-  focus.selectAll("circle")
-    .data(filterData(dataLine, xScale.domain()))
-    .enter().append("circle")
-    .on("mouseover", function(d) {
-      dispatch.call("MouseOver", d, d);
-    })
-    .on("mouseleave", function(d) {
-      dispatch.call("MouseLeave", d, d);
-    })
-    .attr("r", 2)
-    .attr("class", "dot")
-    .attr("cx", function(d) {
-      return xScale(d.key);
-    })
-    .attr("cy", function(d) {
-      return yScale(d.value);
-    })
-    .attr("year", function(d) {return d.key;})
-    .attr("fill", "steelblue");
+    focus.selectAll(".dot").remove();
+    focus.selectAll("circle")
+      .data(filterData(dataLine, xScale.domain()))
+      .enter().append("circle")
+      .on("mouseover", function(d) {
+        dispatch.call("MouseOver", d, d);
+      })
+      .on("mouseleave", function(d) {
+        dispatch.call("MouseLeave", d, d);
+      })
+      .attr("r", 2)
+      .attr("class", "dot")
+      .attr("cx", function(d) {
+        return xScale(d.key);
+      })
+      .attr("cy", function(d) {
+        return yScale(d.value);
+      })
+      .attr("year", function(d) {return d.key;})
+      .attr("fill", "steelblue");
 
 
-  focus.select(".x.axis")
-    .attr("transform", "translate(0," + (height + 5) + ")")
-    .call(xAxis);
+    focus.select(".x.axis")
+      .attr("transform", "translate(0," + (height + 5) + ")")
+      .call(xAxis);
 
-  svgScat.selectAll(".dot").remove();
-  svgScat.selectAll("circle")
-    .data(filterDataScat(dataScat, xScaleScat.domain()))
-    .enter().append("circle")
-    .on("mouseover", function(d) {
-      dispatch.call("MouseOver", d, d);
-    })
-    .on("mouseleave", function(d) {
-      dispatch.call("MouseLeave", d, d);
-    })
-    .attr("r", 3)
-    .attr("class", "dot")
-    .attr("fill", "steelblue")
-    .attr("opacity", "0.5")
-    .attr("cx", function(d) {
-      if (d.original_publication_year >= xScaleScat.domain()[1]) {
-        cx = xScaleScat(d.original_publication_year)
-      } else {
-        cx = xScaleScat(d.original_publication_year) + Math.floor(Math.random() * (1140 / (xScaleScat.domain()[1] - xScaleScat.domain()[0])));
-      }
-      return cx;
-    })
-    .attr("cy", function(d) {
-      return heighScat - Math.floor(Math.random() * (heighScat / 2 + 1)) - heighScat / 4;
-    })
-    .attr("title", function(d) {return d.title;})
-    .attr("year", function(d) { return d.original_publication_year;});
-  svgScat.select(".x.axis").call(xAxisScat);
+    svgScat.selectAll(".dot").remove();
+    svgScat.selectAll("circle")
+      .data(filterDataScat(dataScat, xScaleScat.domain()))
+      .enter().append("circle")
+      .on("mouseover", function(d) {
+        dispatch.call("MouseOver", d, d);
+      })
+      .on("mouseleave", function(d) {
+        dispatch.call("MouseLeave", d, d);
+      })
+      .attr("r", 3)
+      .attr("class", "dot")
+      .attr("fill", "steelblue")
+      .attr("opacity", "0.5")
+      .attr("cx", function(d) {
+        if (d.original_publication_year >= xScaleScat.domain()[1]) {
+          cx = xScaleScat(d.original_publication_year)
+        } else {
+          cx = xScaleScat(d.original_publication_year) + Math.floor(Math.random() * (1140 / (xScaleScat.domain()[1] - xScaleScat.domain()[0])));
+        }
+        return cx;
+      })
+      .attr("cy", function(d) {
+        return heighScat - Math.floor(Math.random() * (heighScat / 2 + 1)) - heighScat / 4;
+      })
+      .attr("title", function(d) {return d.title;})
+      .attr("year", function(d) { return d.original_publication_year;});
+    svgScat.select(".x.axis").call(xAxisScat);
+  }
+
 }
 
 function filterData(data, range) {
