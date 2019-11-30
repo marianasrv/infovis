@@ -1,7 +1,7 @@
 var dataLine, dataScat, dataBar;
 var brush;
 var xScaleOverview, xScale, yScale;
-var widthLine, widthScat, heighScat;
+var widthLine, widthScat, heightScat;
 var line, xAxis;
 var focus;
 var height;
@@ -9,7 +9,7 @@ var dispatch;
 var selectedBar, selectedBars, selectedDotsOnScat, selectedCircle, selectedOnLine, selectedDotOnLine;
 var tooltip, showTooltip, hideTooltip, moveTooltip;
 
-d3.csv("sample2.csv").then(function(data) {
+d3.csv("sample1950.csv").then(function(data) {
   //full_dataScat = data;
   dataLine = data;
   dataScat = data;
@@ -86,7 +86,7 @@ function genLineChart() {
   var padding = 30
 
   xScale = d3.scaleLinear()
-    .domain([1950, 2015])
+    .domain([2010, 2015])
     .range([padding, widthLine - padding]);
 
   xScaleOverview = d3.scaleLinear()
@@ -98,11 +98,13 @@ function genLineChart() {
 
   xAxis = d3.axisBottom()
     .scale(xScale)
-    .tickFormat(d3.format("d"));
+    .tickFormat(d3.format("d"))
+    .ticks((xScale.domain()[1]- xScale.domain()[0]));
 
   var xAxisOverview = d3.axisBottom()
     .scale(xScaleOverview)
-    .tickFormat(d3.format("d"));
+    .tickFormat(d3.format("d"))
+    .ticks(10);
 
   yScale = d3.scaleLinear()
     .domain([3, 5])
@@ -224,10 +226,13 @@ function genLineChart() {
   context.append("g")
     .attr("class", "x brush")
     .call(brush)
-    .call(brush.move, [1950, 2015].map(xScaleOverview))
-    .selectAll("rect")
-    .attr("y", -6)
-    .attr("height", heightOverview + 7);
+    .call(brush.move, [2010, 2015].map(xScaleOverview))
+    .call(g => g.select(".overlay")
+          .datum({type: "selection"})
+          .on("mousedown touchstart", beforebrushstarted));
+    //.selectAll("rect")
+    //.attr("y", -6)
+    //.attr("height", heightOverview + 7);
 
     context.append("text")
      .attr("transform",
@@ -326,6 +331,15 @@ function genLineChart() {
 
 }
 
+function beforebrushstarted() {
+
+    const [x0, x1] = [2010, 2015];
+    const [X0, X1] = xScale.range();
+    d3.select(this.parentNode)
+        .call(brush.move, x1 > X1 ? [X1 - 40, X1]
+            : x0 < X0 ? [X0, X0 + 40]
+            : [x0, x1]);
+  }
 
 
 function brushended() {
@@ -338,6 +352,21 @@ function brushended() {
     xScale.domain(d3.event.selection === null ? xScaleOverview.domain() : [x0, x1]);
     xScaleScat.domain(d3.event.selection === null ? xScaleOverview.domain() : [x0, x1]);
 
+    if ((xScale.domain()[1] - xScale.domain()[0]) < 4) {
+      xAxis.ticks((xScale.domain()[1] - xScale.domain()[0]) / 2 + 1);
+      xAxisScat.ticks((xScaleScat.domain()[1] - xScaleScat.domain()[0]) / 2 + 1);
+      if ((xScale.domain()[1] - xScale.domain()[0]) == 1) {
+        xAxis.ticks(1);
+        xAxisScat.ticks(1);
+      }
+    }
+    else {
+      xAxis.ticks(xScale.domain()[1] - xScale.domain()[0]);
+      xAxisScat.ticks(xScaleScat.domain()[1] - xScaleScat.domain()[0]);
+    }
+
+
+    xScaleScat.ticks((xScaleScat.domain()[1] - xScaleScat.domain()[0]));
     line = d3.line()
       .x(function(d) {
         return xScale(d.key);
@@ -379,6 +408,7 @@ function brushended() {
       .attr("transform", "translate(0," + (height + 5) + ")")
       .call(xAxis);
 
+
     svgScat.selectAll(".dot").remove();
     svgScat.selectAll("circle")
       .data(filterDataScat(dataScat, xScaleScat.domain()))
@@ -408,7 +438,7 @@ function brushended() {
         return cx;
       })
       .attr("cy", function(d) {
-        return heighScat - Math.floor(Math.random() * (heighScat / 2 + 1)) - heighScat / 4;
+        return heightScat - 20- Math.floor(Math.random() * (heightScat / 2 + 1)) - heightScat / 4;
       })
       .attr("title", function(d) {return d.title;})
       .attr("year", function(d) { return d.original_publication_year;});
@@ -434,12 +464,12 @@ function filterDataScat(data, range) {
 
 function genScatterplot() {
   widthScat = 1200;
-  heighScat = 120;
+  heightScat = 120;
 
   svgScat = d3.select("#scatterplot")
     .append("svg")
     .attr("width", widthScat)
-    .attr("height", heighScat);
+    .attr("height", heightScat);
 
 
   var padding = 30;
@@ -453,26 +483,27 @@ function genScatterplot() {
 
 
   xScaleScat = d3.scaleLinear()
-    .domain([1950, 2015])
+    .domain([2010, 2015])
     .range([padding, widthScat - padding]);
 
 
 
   xAxisScat = d3.axisBottom()
     .scale(xScaleScat)
-    .tickFormat(d3.format("d"));
+    .tickFormat(d3.format("d"))
+    .ticks((xScaleScat.domain()[1] - xScaleScat.domain()[0]));
 
 
 
   svgScat.append("g")
     .attr("class", "x axis")
-    .attr("transform", "translate(0," + (heighScat - 40) + ")")
+    .attr("transform", "translate(0," + (heightScat - 40) + ")")
     .call(xAxisScat);
 
   svgScat.append("text")
      .attr("transform",
            "translate(" + (widthScat/2) + " ," +
-                          (heighScat - 10) + ")")
+                          (heightScat - 10) + ")")
      .style("text-anchor", "middle")
      .style("font-size", 10)
      .text("Publication Year");
@@ -506,7 +537,7 @@ function genScatterplot() {
       return cx;
     })
     .attr("cy", function(d) {
-      return heighScat - 20 - Math.floor(Math.random() * (heighScat / 2 + 1)) - heighScat / 4;
+      return heightScat - 20 - Math.floor(Math.random() * (heightScat / 2 + 1)) - heightScat / 4;
     })
     .attr("title", function(d) {return d.title;})
     .attr("year", function(d) { return d.original_publication_year;});
