@@ -7,7 +7,7 @@ var focus;
 var height;
 var dispatch;
 var selectedBar, selectedBars, selectedDotsOnScat, selectedCircle, selectedOnLine, selectedDotOnLine;
-var tooltip, showTooltip, hideTooltip, moveTooltip;
+var tooltip, showTooltip, hideTooltip, moveTooltip, showTooltipLine;
 
 d3.csv("sample1950.csv").then(function(data) {
   //full_dataScat = data;
@@ -28,6 +28,16 @@ d3.csv("sample1950.csv").then(function(data) {
 
     // A function that change this tooltip when the user hover a point.
     // Its opacity is set to 1: we can now see it. Plus it set the text and position of tooltip depending on the datapoint (d)
+  showTooltipLine = function(d) {
+      tooltip
+        .transition()
+        .duration(100)
+        .style("opacity", .8)
+      tooltip
+        .html(parseFloat(d.value).toFixed(2))
+        .style("left", (d3.event.pageX)+10 + "px")
+        .style("top", (d3.event.pageY)+10 + "px")
+  }
   showTooltip = function(d) {
       tooltip
         .transition()
@@ -35,8 +45,8 @@ d3.csv("sample1950.csv").then(function(data) {
         .style("opacity", .8)
       tooltip
         .html(d.title)
-        .style("left", (d3.event.pageX) + "px")
-        .style("top", (d3.event.pageY) + "px")
+        .style("left", (d3.event.pageX)+10 + "px")
+        .style("top", (d3.event.pageY)+10 + "px")
   }
   moveTooltip = function(d) {
       tooltip
@@ -185,9 +195,11 @@ function genLineChart() {
     .enter().append("circle")
     .on("mouseover", function(d) {
       dispatch.call("MouseOver", d, d);
+      showTooltipLine(d);
     })
     .on("mouseleave", function(d) {
       dispatch.call("MouseLeave", d, d);
+      hideTooltip(d);
     })
     .attr("r", 3.5)
     .attr("class", "dot")
@@ -388,9 +400,11 @@ function brushended() {
       .enter().append("circle")
       .on("mouseover", function(d) {
         dispatch.call("MouseOver", d, d);
+        showTooltipLine(d);
       })
       .on("mouseleave", function(d) {
         dispatch.call("MouseLeave", d, d);
+        hideTooltip(d);
       })
       .attr("r", 3.5)
       .attr("class", "dot")
@@ -439,6 +453,7 @@ function brushended() {
       })
       .attr("cy", function(d) {
         return heightScat - 20- Math.floor(Math.random() * (heightScat / 2 + 1)) - heightScat / 4;
+
       })
       .attr("title", function(d) {return d.title;})
       .attr("year", function(d) { return d.original_publication_year;});
@@ -547,7 +562,7 @@ function genScatterplot() {
 
 function genBarChart() {
   var w = 710;
-  var h = 300;
+  var h = 250;
 
   svg = d3.select("#BarChart")
     .append("svg")
