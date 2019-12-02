@@ -452,11 +452,8 @@ function brushended() {
         return cx;
       })
       .attr("cy", function(d) {
-<<<<<<< Updated upstream
         return heightScat - 20- Math.floor(Math.random() * (heightScat / 2 + 1)) - heightScat / 4;
-=======
-        return heighScat - 20 - Math.floor(Math.random() * (heighScat / 2 + 1)) - heighScat / 4;
->>>>>>> Stashed changes
+
       })
       .attr("title", function(d) {return d.title;})
       .attr("year", function(d) { return d.original_publication_year;});
