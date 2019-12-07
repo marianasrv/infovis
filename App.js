@@ -1,4 +1,9 @@
 var dataLine, dataScat, dataBar;
+var svgBar, widthBar, heightBar;
+var yScaleBar, xScaleBar, yZoom;
+var bar_h;
+var xAxisBar;
+var mainBar, zoomer, defs;
 var brush;
 var xScaleOverview, xScale, yScale;
 var widthLine, widthScat, heightScat;
@@ -13,52 +18,52 @@ d3.csv("sample1950.csv").then(function(data) {
   //full_dataScat = data;
   dataLine = data;
   dataScat = data;
-  dataBar = data.slice(0, 5);
+  dataBar = data;
   dispatch = d3.dispatch("MouseOver", "MouseLeave");
 
   tooltip = d3.select("body")
-      .append("div")
-      .style("opacity", 0)
-      .attr("class", "tooltip")
-      .style("background-color", "black")
-      .style("color", "white")
-      .style("border-radius", "5px")
-      .style("padding", "10px")
-      .style("position", "absolute")
+    .append("div")
+    .style("opacity", 0)
+    .attr("class", "tooltip")
+    .style("background-color", "black")
+    .style("color", "white")
+    .style("border-radius", "5px")
+    .style("padding", "10px")
+    .style("position", "absolute")
 
-    // A function that change this tooltip when the user hover a point.
-    // Its opacity is set to 1: we can now see it. Plus it set the text and position of tooltip depending on the datapoint (d)
+  // A function that change this tooltip when the user hover a point.
+  // Its opacity is set to 1: we can now see it. Plus it set the text and position of tooltip depending on the datapoint (d)
   showTooltipLine = function(d) {
-      tooltip
-        .transition()
-        .duration(100)
-        .style("opacity", .8)
-      tooltip
-        .html(parseFloat(d.value).toFixed(2))
-        .style("left", (d3.event.pageX)+10 + "px")
-        .style("top", (d3.event.pageY)+10 + "px")
+    tooltip
+      .transition()
+      .duration(100)
+      .style("opacity", .8)
+    tooltip
+      .html(parseFloat(d.value).toFixed(2))
+      .style("left", (d3.event.pageX) + 10 + "px")
+      .style("top", (d3.event.pageY) + 10 + "px")
   }
   showTooltip = function(d) {
-      tooltip
-        .transition()
-        .duration(100)
-        .style("opacity", .8)
-      tooltip
-        .html(d.title)
-        .style("left", (d3.event.pageX)+10 + "px")
-        .style("top", (d3.event.pageY)+10 + "px")
+    tooltip
+      .transition()
+      .duration(100)
+      .style("opacity", .8)
+    tooltip
+      .html(d.title)
+      .style("left", (d3.event.pageX) + 10 + "px")
+      .style("top", (d3.event.pageY) + 10 + "px")
   }
   moveTooltip = function(d) {
-      tooltip
-      .style("left", (d3.event.pageX)+ 10 + "px")
-      .style("top", (d3.event.pageY)+ 10  + "px")
+    tooltip
+      .style("left", (d3.event.pageX) + 10 + "px")
+      .style("top", (d3.event.pageY) + 10 + "px")
   }
-    // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
+  // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
   hideTooltip = function(d) {
-      tooltip
-        .transition()
-        .duration(100)
-        .style("opacity", 0)
+    tooltip
+      .transition()
+      .duration(100)
+      .style("opacity", 0)
   }
 
   genLineChart();
@@ -100,16 +105,20 @@ function genLineChart() {
     .range([padding, widthLine - padding]);
 
   xScaleOverview = d3.scaleLinear()
-    .domain(d3.extent(dataLine.map(function(d) {
-      return d.key;
-    })))
+    .domain([d3.min(dataLine, function(d) {
+        return d.key;
+      }),
+      d3.max(dataLine, function(d) {
+        return d.key;
+      }) + 1
+    ])
     .range([padding, widthLine - padding]);
 
 
   xAxis = d3.axisBottom()
     .scale(xScale)
     .tickFormat(d3.format("d"))
-    .ticks((xScale.domain()[1]- xScale.domain()[0]));
+    .ticks((xScale.domain()[1] - xScale.domain()[0]));
 
   var xAxisOverview = d3.axisBottom()
     .scale(xScaleOverview)
@@ -203,7 +212,9 @@ function genLineChart() {
     })
     .attr("r", 3.5)
     .attr("class", "dot")
-    .attr("title", function(d) {return d.title;})
+    .attr("title", function(d) {
+      return d.title;
+    })
     .attr("cx", function(d) {
       return xScale(d.key);
     })
@@ -211,16 +222,18 @@ function genLineChart() {
       return yScale(d.value);
     })
     .attr("fill", "#5C9AA8")
-    .attr("year", function(d) { return d.key;});
+    .attr("year", function(d) {
+      return d.key;
+    });
 
-    focus.append("text")
-     .attr("transform", "rotate(-90)")
-     .attr("y", -3)
-     .attr("x",0 - (height / 2))
-     .attr("dy", "1em")
-     .style("text-anchor", "middle")
-     .style("font-size", 10)
-     .text("Average Rating");
+  focus.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("y", -3)
+    .attr("x", 0 - (height / 2))
+    .attr("dy", "1em")
+    .style("text-anchor", "middle")
+    .style("font-size", 10)
+    .text("Average Rating");
 
 
   context.append("path")
@@ -238,21 +251,16 @@ function genLineChart() {
   context.append("g")
     .attr("class", "x brush")
     .call(brush)
-    .call(brush.move, [2010, 2015].map(xScaleOverview))
-    .call(g => g.select(".overlay")
-          .datum({type: "selection"})
-          .on("mousedown touchstart", beforebrushstarted));
-    //.selectAll("rect")
-    //.attr("y", -6)
-    //.attr("height", heightOverview + 7);
+    .call(brush.move, [2010, 2015].map(xScaleOverview));
 
-    context.append("text")
-     .attr("transform",
-           "translate(" + (widthLine/2) + " ," +
-                          (heightOverview - 12) + ")")
-     .style("text-anchor", "middle")
-     .style("font-size", 10)
-     .text("Publication Year");
+
+  context.append("text")
+    .attr("transform",
+      "translate(" + (widthLine / 2) + " ," +
+      (heightOverview - 12) + ")")
+    .style("text-anchor", "middle")
+    .style("font-size", 10)
+    .text("Publication Year");
 
   context.selectAll("dot")
     .data(dataLine)
@@ -267,98 +275,95 @@ function genLineChart() {
     })
     .style("fill", "gray");
 
-    dispatch.on("MouseOver", function(book) {
-      if (selectedBar) {
-        selectedBar.attr("fill", "#5C9AA8");
-      }
-      if (selectedBars) {
-        selectedBars.attr("fill", "#5C9AA8");
-      }
-      if (selectedDotsOnScat) {
-        selectedDotsOnScat.attr("fill", "#5C9AA8");
-        selectedDotsOnScat.attr("opacity", 0.5);
-        selectedDotsOnScat.attr("r", 3);
-      }
-      if (selectedDotOnLine) {
-        selectedDotOnLine.attr("fill", "#5C9AA8");
-      }
-      if (selectedCircle) {
-        selectedCircle.attr("fill", "#5C9AA8");
-        selectedCircle.attr("opacity", 0.5);
-        selectedCircle.attr("r", 3);
-      }
-      if (selectedOnLine) {
-        selectedOnLine.attr("fill", "#5C9AA8");
-      }
+  dispatch.on("MouseOver", function(book) {
+    if (selectedBar) {
+      selectedBar.attr("fill", "#5C9AA8");
+    }
+    if (selectedBars) {
+      selectedBars.attr("fill", "#5C9AA8");
+    }
+    if (selectedDotsOnScat) {
+      selectedDotsOnScat.attr("fill", "#5C9AA8");
+      selectedDotsOnScat.attr("opacity", 0.5);
+      selectedDotsOnScat.attr("r", 3);
+      selectedDotsOnScat.style("z-index", "initial");
+    }
+    if (selectedDotOnLine) {
+      selectedDotOnLine.attr("fill", "#5C9AA8");
+    }
+    if (selectedCircle) {
+      selectedCircle.attr("fill", "#5C9AA8");
+      selectedCircle.attr("opacity", 0.5);
+      selectedCircle.attr("r", 3);
+      selectedCircle.style("z-index", "initial");
+    }
+    if (selectedOnLine) {
+      selectedOnLine.attr("fill", "#5C9AA8");
+    }
 
 
-      selectedCircle = d3.select("circle[title =\'" + book.title + "\']");
-      selectedCircle.attr("opacity", 1);
-      selectedCircle.attr("r", 5);
-      selectedCircle.attr("fill", "#F1A758");
+    selectedCircle = d3.select("circle[title =\'" + book.title + "\']");
+    selectedCircle.attr("opacity", 1);
+    selectedCircle.attr("r", 7);
+    selectedCircle.attr("fill", "#F1A758");
+    selectedCircle.style("z-index", "-1");
 
-      selectedOnLine = focus.select("circle[year =\'" + book.original_publication_year + "\']");
-      selectedOnLine.attr("fill", "#F1A758");
+    selectedOnLine = focus.select("circle[year =\'" + book.original_publication_year + "\']");
+    selectedOnLine.attr("fill", "#F1A758");
 
-      selectedDotsOnScat = svgScat.selectAll("circle[year =\'" + book.key + "\']");
-      selectedDotsOnScat.attr("opacity", 1);
-      selectedDotsOnScat.attr("r", 5);
-      selectedDotsOnScat.attr("fill", "#F1A758");
+    selectedDotsOnScat = svgScat.selectAll("circle[year =\'" + book.key + "\']");
+    selectedDotsOnScat.attr("opacity", 1);
+    selectedDotsOnScat.attr("r", 7);
+    selectedDotsOnScat.attr("fill", "#F1A758");
+    selectedDotsOnScat.style("z-index", "-1");
 
-      selectedDotOnLine = focus.select("circle[year =\'" + book.key + "\']");
-      selectedDotOnLine.attr("fill", "#F1A758");
+    selectedDotOnLine = focus.select("circle[year =\'" + book.key + "\']");
+    selectedDotOnLine.attr("fill", "#F1A758");
 
-      selectedBars = d3.selectAll("rect[year =\'" + book.key + "\']");
-      selectedBars.attr("fill", "#F1A758");
-      selectedBar = d3.select("rect[title =\'" + book.title + "\']");
-      selectedBar.attr("fill", "#F1A758");
+    selectedBars = d3.selectAll("rect[year =\'" + book.key + "\']");
+    selectedBars.attr("fill", "#F1A758");
+    selectedBar = d3.select("rect[title =\'" + book.title + "\']");
+    selectedBar.attr("fill", "#F1A758");
 
-    });
+  });
 
-    dispatch.on("MouseLeave", function(book) {
-      if (selectedBar) {
-        selectedBar.attr("fill", "#5C9AA8");
-      }
-      if (selectedBars) {
-        selectedBars.attr("fill", "#5C9AA8");
-      }
-      if (selectedDotsOnScat) {
-        selectedDotsOnScat.attr("fill", "#5C9AA8");
-        selectedDotsOnScat.attr("opacity", 0.5);
-        selectedDotsOnScat.attr("r", 3);
-      }
-      if (selectedCircle) {
-        selectedCircle.attr("fill", "#5C9AA8");
-        selectedCircle.attr("opacity", 0.5);
-        selectedCircle.attr("r", 3);
-      }
-      if (selectedOnLine) {
-        selectedOnLine.attr("fill", "#5C9AA8");
-      }
-      if (selectedDotOnLine) {
-        selectedDotOnLine.attr("fill", "#5C9AA8");
-      }
-    })
+  dispatch.on("MouseLeave", function(book) {
+    if (selectedBar) {
+      selectedBar.attr("fill", "#5C9AA8");
+    }
+    if (selectedBars) {
+      selectedBars.attr("fill", "#5C9AA8");
+    }
+    if (selectedDotsOnScat) {
+      selectedDotsOnScat.attr("fill", "#5C9AA8");
+      selectedDotsOnScat.attr("opacity", 0.5);
+      selectedDotsOnScat.attr("r", 3);
+      selectedDotsOnScat.style("z-index", "initial");
+    }
+    if (selectedCircle) {
+      selectedCircle.attr("fill", "#5C9AA8");
+      selectedCircle.attr("opacity", 0.5);
+      selectedCircle.attr("r", 3);
+      selectedCircle.style("z-index", "initial");
+    }
+    if (selectedOnLine) {
+      selectedOnLine.attr("fill", "#5C9AA8");
+    }
+    if (selectedDotOnLine) {
+      selectedDotOnLine.attr("fill", "#5C9AA8");
+    }
+  })
 
 
 }
 
-function beforebrushstarted() {
-
-    const [x0, x1] = [2010, 2015];
-    const [X0, X1] = xScale.range();
-    d3.select(this.parentNode)
-        .call(brush.move, x1 > X1 ? [X1 - 40, X1]
-            : x0 < X0 ? [X0, X0 + 40]
-            : [x0, x1]);
-  }
 
 
 function brushended() {
   const selection = d3.event.selection;
   if (!d3.event.sourceEvent || !selection) return;
   const [x0, x1] = selection.map(d => Math.round(xScaleOverview.invert(d)));
-  //console.log([x0, x1])
+
   if (x0 != xScale.domain()[0] || x1 != xScale.domain()[1]) {
     d3.select(this).transition().call(brush.move, x1 > x0 ? [x0, x1].map(xScaleOverview) : null);
     xScale.domain(d3.event.selection === null ? xScaleOverview.domain() : [x0, x1]);
@@ -371,14 +376,15 @@ function brushended() {
         xAxis.ticks(1);
         xAxisScat.ticks(1);
       }
-    }
-    else {
-      xAxis.ticks(xScale.domain()[1] - xScale.domain()[0]);
+    } else if ((xScale.domain()[1] - xScale.domain()[0]) > 45) {
+
+      xAxis.ticks((xScale.domain()[1] - xScale.domain()[0]) / 4);
+      xAxisScat.ticks((xScaleScat.domain()[1] - xScaleScat.domain()[0]) / 4);
+    } else {
+      xAxis.ticks((xScale.domain()[1] - xScale.domain()[0]) / 2);
       xAxisScat.ticks(xScaleScat.domain()[1] - xScaleScat.domain()[0]);
     }
 
-
-    xScaleScat.ticks((xScaleScat.domain()[1] - xScaleScat.domain()[0]));
     line = d3.line()
       .x(function(d) {
         return xScale(d.key);
@@ -414,7 +420,9 @@ function brushended() {
       .attr("cy", function(d) {
         return yScale(d.value);
       })
-      .attr("year", function(d) {return d.key;})
+      .attr("year", function(d) {
+        return d.key;
+      })
       .attr("fill", "#5C9AA8");
 
 
@@ -452,13 +460,20 @@ function brushended() {
         return cx;
       })
       .attr("cy", function(d) {
-        return heightScat - 20- Math.floor(Math.random() * (heightScat / 2 + 1)) - heightScat / 4;
+        return heightScat - 20 - Math.floor(Math.random() * (heightScat / 2 + 1)) - heightScat / 4;
 
       })
-      .attr("title", function(d) {return d.title;})
-      .attr("year", function(d) { return d.original_publication_year;});
+      .attr("title", function(d) {
+        return d.title;
+      })
+      .attr("year", function(d) {
+        return d.original_publication_year;
+      });
     svgScat.select(".x.axis").call(xAxisScat);
   }
+
+  d3.select(".svgBar").remove();
+  genBarChart();
 
 }
 
@@ -516,12 +531,12 @@ function genScatterplot() {
     .call(xAxisScat);
 
   svgScat.append("text")
-     .attr("transform",
-           "translate(" + (widthScat/2) + " ," +
-                          (heightScat - 10) + ")")
-     .style("text-anchor", "middle")
-     .style("font-size", 10)
-     .text("Publication Year");
+    .attr("transform",
+      "translate(" + (widthScat / 2) + " ," +
+      (heightScat - 10) + ")")
+    .style("text-anchor", "middle")
+    .style("font-size", 10)
+    .text("Publication Year");
 
 
   svgScat.selectAll("circle")
@@ -554,24 +569,39 @@ function genScatterplot() {
     .attr("cy", function(d) {
       return heightScat - 20 - Math.floor(Math.random() * (heightScat / 2 + 1)) - heightScat / 4;
     })
-    .attr("title", function(d) {return d.title;})
-    .attr("year", function(d) { return d.original_publication_year;});
+    .attr("title", function(d) {
+      return d.title;
+    })
+    .attr("year", function(d) {
+      return d.original_publication_year;
+    });
 
 }
 
 
 function genBarChart() {
-  var w = 710;
-  var h = 250;
+  widthBar = 710;
+  heightBar = 250;
 
-  svg = d3.select("#BarChart")
+  zoomer = d3.zoom()
+    .extent([
+      [30, 0],
+      [widthLine - 29, 40]
+    ])
+    .wheelDelta(myDelta)
+    .on("zoom", scrolled);
+
+
+  svgBar = d3.select("#BarChart")
     .append("svg")
-    .attr("width", w)
-    .attr("height", h);
+    .attr("class", "svgBar")
+    .attr("width", widthBar)
+    .attr("height", heightBar)
+    .call(zoomer);
 
   var padding = 30;
-  var bar_w = Math.floor((w - padding * 2) / dataBar.length) - 1;
-  var bar_h = Math.floor((h - padding * 2) / dataBar.length) - 1;
+  var bar_w = Math.floor((widthBar - padding * 2) / dataBar.length) - 1;
+
 
   dataBar.forEach(function(d, i) {
     d.work_ratings_count = +d.work_ratings_count;
@@ -579,21 +609,71 @@ function genBarChart() {
   dataBar = dataBar.sort(function(a, b) {
     return d3.descending(a.work_ratings_count, b.work_ratings_count);
   });
+  /*
+    yScaleBar = d3.scaleBand()
+      .domain(dataBar.map(function(d) {
+        return d.title;
+      }))
+      .range([padding, h - padding]);
+  */
 
-  yScaleBar = d3.scaleLinear()
-    .domain([0, dataBar.length])
-    .range([h - padding, padding]);
+
+  yScaleBar = d3.scaleBand()
+    .domain(filterDataScat(dataBar, xScale.domain()).map(function(d, i) {
+      return i + 1;
+    }))
+    .range([heightBar - padding, padding]);
 
   xScaleBar = d3.scaleLinear()
-    .domain([0, 5000000])
-    .range([0, w - 2*padding]);
+  //  .domain([0, 5000000])
+    .range([0, widthBar - 2 * padding]);
+
+  yZoom = d3.scaleLinear()
+    .range([heightBar - padding, padding])
+    .domain([heightBar - padding, padding]);
+
+    bar_h = yScaleBar.bandwidth() * (1/5 * filterDataScat(dataBar, xScale.domain()).length);
+    var selected = yScaleBar.domain()
+      .filter(function(d, i) { return (heightBar - yScaleBar(i + 1) + i * (bar_h + 10)  <= (heightBar - 30) && (30) <= heightBar - yScaleBar(i + 1) + i * (bar_h + 10)); });
+
+    var maxXScale = d3.max(filterDataScat(dataBar, xScale.domain()), function(d, i) { return selected.indexOf(i + 1) > -1 ? d.work_ratings_count : 0; }) + 50000;
+    xScaleBar.domain([0, maxXScale]);
+
+  xAxisBar = d3.axisBottom() // create a d3 axis
+    .scale(xScaleBar); // fit to our scale
+
+  var yAxisBar = d3.axisLeft()
+    .scale(yScaleBar)
+    .tickSize(0)
+    .tickSizeOuter(0);
+
+    defs = svgBar.append("defs");
+
+      defs.append("clipPath")
+        .attr("id", "path")
+        .append("rect")
+        .attr("x", padding)
+        .attr("y", 30)
+        .attr("width", 670)
+        .attr("height", 190);
+
+  mainBar = svgBar.append("g")
+    .attr("class", "BarWrapper")
+    .attr("transform", "translate(0,-30)")
+    .append("g") //another one for the clip path - due to not wanting to clip the labels
+    .attr("class", "MainBar")
+    .attr("clip-path", "url(#path)");
 
 
-  var xaxis = d3.axisBottom() // create a d3 axis
-                .scale(xScaleBar);  // fit to our scale
 
-  svg.selectAll("rect")
-    .data(dataBar)
+/*
+    mainBar.append("g") // create a 'g' element to match our 'y' axis
+        .attr("transform", "translate(30,0)") // 30 is the padding
+        .attr("class","yaxis") // give css style
+        .call(yAxisBar);
+*/
+    mainBar.selectAll("rect")
+    .data(filterDataScat(dataBar, xScale.domain()))
     .enter().append("rect") // for each item append a bar
     .on("mouseover", function(d) {
       dispatch.call("MouseOver", d, d);
@@ -607,29 +687,136 @@ function genBarChart() {
       dispatch.call("MouseOver", d, d);
       moveTooltip(d);
     })
-    .attr("height", bar_h) // each bar width depends on the number of bars
+    .attr("height", bar_h) // each bar height depends on the number of bars
     .attr("width", function(d) {
-      return xScaleBar(d.work_ratings_count); // each bar height is a score
+      return xScaleBar(d.work_ratings_count); // each bar width is a score
     })
-    .attr("fill", "purple")
     .attr("y", function(d, i) { // d -> each item | i -> each item's index
-      return h - yScaleBar(i); // set each bar position
+      return heightBar - yScaleBar(i + 1) + i * (bar_h + 10); // com legenda : sem "heightBar -"
     })
     .attr("x", function(d) {
       return padding; // fit to our scale
     })
-    .attr("fill","#5C9AA8")
-    .attr("title", function(d) { return d.title;})
-    .attr("year", function(d) { return d.original_publication_year;})
+    .attr("fill", "#5C9AA8")
+    .attr("class", "bar")
+    .attr("title", function(d) {
+      return d.title;
+    })
+    .attr("year", function(d) {
+      return d.original_publication_year;
+    })
+    .attr("popularity" , function(d) {
+      return d.work_ratings_count;
+    });
 
 
 
-  svg.append("g") // create a 'g' element to match our 'y' axis
-    .attr("transform", "translate(30," + (h-padding) + ")")  // 30 is the padding
-    .attr("class","xaxis") // give css style
-    .call(xaxis);
+  d3.select(".BarWrapper")
+    .append("g") // create a 'g' element to match our 'y' axis
+    .attr("transform", "translate(30," + (heightBar - padding) + ")") // 30 is the padding
+    .attr("class", "xaxis") // give css style
+    .call(xAxisBar);
+
+    d3.select(".BarWrapper").append("text")
+      .attr("transform",
+        "translate(" + (widthBar / 2) + " ," +
+        (heightBar - 1) + ")")
+      .style("text-anchor", "middle")
+      .style("font-size", 10)
+      .text("Reviews (Popularity)");
+
+
+
+}
+
+function scrolled() {
+
+  /////////////////////////////////////////////////////////////
+  ////////// Update the bars of the main bar chart ////////////
+  /////////////////////////////////////////////////////////////
+
+  var originalRange = yZoom.range();
+  if (d3.event.sourceEvent.deltaY > 0) {
+    //down
+
+    if ((yZoom.domain()[1] - (bar_h + 10) - yScaleBar.step()) >= (heightBar - 30 - (bar_h + 10 + yScaleBar.step())*(filterDataScat(dataBar, xScale.domain()).length ))) {
+      yZoom.domain([yZoom.domain()[0] - (bar_h + 10) - yScaleBar.step(), yZoom.domain()[1] - (bar_h + 10) - yScaleBar.step()]);
+    }
+  }
+   else {
+     // up
+    if ((yZoom.domain()[0] + (bar_h + 10) + yScaleBar.step()) <= (heightBar - 30 + yScaleBar.step())) {
+      yZoom.domain([yZoom.domain()[0] + (bar_h + 10) + yScaleBar.step(), yZoom.domain()[1] + (bar_h + 10) + yScaleBar.step()]);
+    }
+  }
+
+
+
+  yScaleBar.domain(filterDataScat(dataBar, xScale.domain()).map(function(d, i) {
+    return i + 1;
+  }))
+
+  yScaleBar.range([yZoom(originalRange[0]), yZoom(originalRange[1])]);
+
+  var selected = yScaleBar.domain()
+    .filter(function(d, i) { return (heightBar - yScaleBar(i + 1) + i * (bar_h + 10)  <= (heightBar - 30) && (30) <= heightBar - yScaleBar(i + 1) + i * (bar_h + 10)); });
+
+
+  var newMaxXScale = d3.max(filterDataScat(dataBar, xScale.domain()), function(d, i) { return selected.indexOf(i + 1) > -1 ? d.work_ratings_count : 0; }) + 50000;
+  xScaleBar.domain([0, newMaxXScale]);
+
+
+   //Update the x axis of the big chart
+   d3.select(".BarWrapper")
+     .select(".xaxis")
+     .transition().duration(50)
+     .call(xAxisBar);
+
+  mainBar.selectAll(".bar").remove();
+  mainBar.selectAll("rect")
+    .data(filterDataScat(dataBar, xScale.domain()))
+    .enter().append("rect")
+    .attr("class", "bar")
+    .on("mouseover", function(d) {
+      dispatch.call("MouseOver", d, d);
+      showTooltip(d);
+    })
+    .on("mouseleave", function(d) {
+      dispatch.call("MouseLeave", d, d);
+      hideTooltip(d);
+    })
+    .on("mousemove", function(d) {
+      dispatch.call("MouseOver", d, d);
+      moveTooltip(d);
+    })
+    .attr("fill", "#5C9AA8")
+    .attr("height", bar_h) // each bar height depends on the number of bars
+    .attr("width", function(d) {
+      return xScaleBar(d.work_ratings_count); // each bar width is a score
+    })
+    .attr("y", function(d, i) { // d -> each item | i -> each item's index
+      return heightBar - yScaleBar(i + 1) + i * (bar_h + 10); // com legenda : sem "heightBar -"
+    })
+    .attr("x", function(d) {
+      return 30; // fit to our scale
+    })
+    .attr("title", function(d) {
+      return d.title;
+    })
+    .attr("year", function(d) {
+      return d.original_publication_year;
+    })
+    .attr("popularity" , function(d) {
+      return d.work_ratings_count;
+    })
+    .transition().duration(150);
 
 
 
 
+
+}
+
+function myDelta() {
+  return -d3.event.deltaY * (d3.event.deltaMode ? 120 : 1) / 1500;
 }
