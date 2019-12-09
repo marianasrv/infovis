@@ -76,6 +76,14 @@
   min-height: 120;
 }
 
+.multiselect-container {
+  max-width: 300px;
+}
+
+.dropdown-menu > li > a {
+    white-space: normal !important;
+}
+
 
 #scatterplot {
   align-items: flex-end;

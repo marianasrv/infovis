@@ -1,6 +1,7 @@
-var dataLine, dataScat, dataBar;
+var dataLine, dataScat, dataBar, dataGenre, dataTitle, dataContext;
 var svgBar, widthBar, heightBar;
 var yScaleBar, xScaleBar, yZoom;
+var groups, cibo_data;
 var bar_h;
 var xAxisBar;
 var mainBar, zoomer, defs;
@@ -13,12 +14,17 @@ var height;
 var dispatch;
 var selectedBar, selectedBars, selectedDotsOnScat, selectedCircle, selectedOnLine, selectedDotOnLine;
 var tooltip, showTooltip, hideTooltip, moveTooltip, showTooltipLine;
+var genres, titles;
 
-d3.csv("sample1950.csv").then(function(data) {
+
+
+d3.csv("sampleBook.csv").then(function(data) {
   //full_dataScat = data;
   dataLine = data;
   dataScat = data;
   dataBar = data;
+  dataGenre = data;
+  dataTitle = data.sort(function (a,b) {return d3.ascending(a.title, b.title);});
   dispatch = d3.dispatch("MouseOver", "MouseLeave");
 
   tooltip = d3.select("body")
@@ -66,17 +72,18 @@ d3.csv("sample1950.csv").then(function(data) {
       .style("opacity", 0)
   }
 
+  genMenu();
   genLineChart();
   genScatterplot();
   genBarChart();
+
 
 
 });
 
 function genLineChart() {
 
-
-  dataLine = d3.nest()
+  dataContext = d3.nest()
     .key(function(d) {
       return d.original_publication_year;
     })
@@ -87,12 +94,13 @@ function genLineChart() {
     })
     .entries(dataLine);
 
-  dataLine.forEach(function(d, i) {
+  dataContext.forEach(function(d, i) {
     d.key = +d.key;
   });
-  dataLine.sort(function(a, b) {
+  dataContext.sort(function(a, b) {
     return d3.ascending(a.key, b.key);
   });
+
 
 
   height = 120;
@@ -105,10 +113,10 @@ function genLineChart() {
     .range([padding, widthLine - padding]);
 
   xScaleOverview = d3.scaleLinear()
-    .domain([d3.min(dataLine, function(d) {
+    .domain([d3.min(dataContext, function(d) {
         return d.key;
       }),
-      d3.max(dataLine, function(d) {
+      d3.max(dataContext, function(d) {
         return d.key;
       }) + 1
     ])
@@ -237,7 +245,7 @@ function genLineChart() {
 
 
   context.append("path")
-    .datum(dataLine)
+    .datum(dataContext)
     .attr("class", "line")
     .style("fill", "none")
     .style("stroke", "gray")
@@ -263,7 +271,7 @@ function genLineChart() {
     .text("Publication Year");
 
   context.selectAll("dot")
-    .data(dataLine)
+    .data(dataContext)
     .enter().append("circle")
     .attr("r", 1.5)
     .attr("class", "dot")
@@ -385,108 +393,133 @@ function brushended() {
       xAxisScat.ticks(xScaleScat.domain()[1] - xScaleScat.domain()[0]);
     }
 
-    line = d3.line()
-      .x(function(d) {
-        return xScale(d.key);
-      })
-      .y(function(d) {
-        return yScale(d.value);
-      })
-    focus.select(".line").remove();
-    focus.append("path")
-      .datum(filterData(dataLine, xScale.domain()))
-      .attr("class", "line")
-      .style("fill", "none")
-      .style("stroke", "#5C9AA8")
-      .attr("d", line);
-
-    focus.selectAll(".dot").remove();
-    focus.selectAll("circle")
-      .data(filterData(dataLine, xScale.domain()))
-      .enter().append("circle")
-      .on("mouseover", function(d) {
-        dispatch.call("MouseOver", d, d);
-        showTooltipLine(d);
-      })
-      .on("mouseleave", function(d) {
-        dispatch.call("MouseLeave", d, d);
-        hideTooltip(d);
-      })
-      .attr("r", 3.5)
-      .attr("class", "dot")
-      .attr("cx", function(d) {
-        return xScale(d.key);
-      })
-      .attr("cy", function(d) {
-        return yScale(d.value);
-      })
-      .attr("year", function(d) {
-        return d.key;
-      })
-      .attr("fill", "#5C9AA8");
-
-
-    focus.select(".x.axis")
-      .attr("transform", "translate(0," + (height + 5) + ")")
-      .call(xAxis);
-
-
-    svgScat.selectAll(".dot").remove();
-    svgScat.selectAll("circle")
-      .data(filterDataScat(dataScat, xScaleScat.domain()))
-      .enter().append("circle")
-      .on("mouseover", function(d) {
-        dispatch.call("MouseOver", d, d);
-        showTooltip(d);
-      })
-      .on("mouseleave", function(d) {
-        dispatch.call("MouseLeave", d, d);
-        hideTooltip(d);
-      })
-      .on("mousemove", function(d) {
-        dispatch.call("MouseOver", d, d);
-        moveTooltip(d);
-      })
-      .attr("r", 3)
-      .attr("class", "dot")
-      .attr("fill", "#5C9AA8")
-      .attr("opacity", "0.5")
-      .attr("cx", function(d) {
-        if (d.original_publication_year >= xScaleScat.domain()[1]) {
-          cx = xScaleScat(d.original_publication_year)
-        } else {
-          cx = xScaleScat(d.original_publication_year) + Math.floor(Math.random() * (1140 / (xScaleScat.domain()[1] - xScaleScat.domain()[0])));
-        }
-        return cx;
-      })
-      .attr("cy", function(d) {
-        return heightScat - 20 - Math.floor(Math.random() * (heightScat / 2 + 1)) - heightScat / 4;
-
-      })
-      .attr("title", function(d) {
-        return d.title;
-      })
-      .attr("year", function(d) {
-        return d.original_publication_year;
-      });
-    svgScat.select(".x.axis").call(xAxisScat);
+    update()
   }
+}
+
+function update() {
+  line = d3.line()
+    .x(function(d) {
+      return xScale(d.key);
+    })
+    .y(function(d) {
+      return yScale(d.value);
+    })
+  focus.select(".line").remove();
+  focus.append("path")
+    .datum(filterData(dataLine, xScale.domain()))
+    .attr("class", "line")
+    .style("fill", "none")
+    .style("stroke", "#5C9AA8")
+    .attr("d", line);
+
+  focus.selectAll(".dot").remove();
+  focus.selectAll("circle")
+    .data(filterData(dataLine, xScale.domain()))
+    .enter().append("circle")
+    .on("mouseover", function(d) {
+      dispatch.call("MouseOver", d, d);
+      showTooltipLine(d);
+    })
+    .on("mouseleave", function(d) {
+      dispatch.call("MouseLeave", d, d);
+      hideTooltip(d);
+    })
+    .attr("r", 3.5)
+    .attr("class", "dot")
+    .attr("cx", function(d) {
+      return xScale(d.key);
+    })
+    .attr("cy", function(d) {
+      return yScale(d.value);
+    })
+    .attr("year", function(d) {
+      return d.key;
+    })
+    .attr("fill", "#5C9AA8");
+
+
+  focus.select(".x.axis")
+    .attr("transform", "translate(0," + (height + 5) + ")")
+    .call(xAxis);
+
+
+  svgScat.selectAll(".dot").remove();
+  svgScat.selectAll("circle")
+    .data(filterDataScat(dataScat, xScaleScat.domain()))
+    .enter().append("circle")
+    .on("mouseover", function(d) {
+      dispatch.call("MouseOver", d, d);
+      showTooltip(d);
+    })
+    .on("mouseleave", function(d) {
+      dispatch.call("MouseLeave", d, d);
+      hideTooltip(d);
+    })
+    .on("mousemove", function(d) {
+      dispatch.call("MouseOver", d, d);
+      moveTooltip(d);
+    })
+    .attr("r", 3)
+    .attr("class", "dot")
+    .attr("fill", "#5C9AA8")
+    .attr("opacity", "0.5")
+    .attr("cx", function(d) {
+      if (d.original_publication_year >= xScaleScat.domain()[1]) {
+        cx = xScaleScat(d.original_publication_year)
+      } else {
+        cx = xScaleScat(d.original_publication_year) + Math.floor(Math.random() * (1140 / (xScaleScat.domain()[1] - xScaleScat.domain()[0])));
+      }
+      return cx;
+    })
+    .attr("cy", function(d) {
+      return heightScat - 20 - Math.floor(Math.random() * (heightScat / 2 + 1)) - heightScat / 4;
+
+    })
+    .attr("title", function(d) {
+      return d.title;
+    })
+    .attr("year", function(d) {
+      return d.original_publication_year;
+    });
+  svgScat.select(".x.axis").call(xAxisScat);
 
   d3.select(".svgBar").remove();
   genBarChart();
-
 }
+
+
 
 function filterData(data, range) {
 
-  const result = data.filter(d => d.key >= range[0] && d.key < range[1]);
+  var dataFilter = data.filter(d => genres.includes(d.tag_name) ); // && titles.includes(d.title) ????
+  dataFilter = d3.nest()
+    .key(function(d) {
+      return d.original_publication_year;
+    })
+    .rollup(function(v) {
+      return d3.mean(v, function(d) {
+        return d.average_rating;
+      });
+    })
+    .entries(dataFilter);
+
+  dataFilter.forEach(function(d, i) {
+    d.key = +d.key;
+  });
+  dataFilter.sort(function(a, b) {
+    return d3.ascending(a.key, b.key);
+  });
+
+  const result = dataFilter.filter(d => d.key >= range[0] && d.key < range[1] );
 
   return result;
 }
 
 function filterDataScat(data, range) {
 
-  const result = data.filter(d => d.original_publication_year >= range[0] && d.original_publication_year < range[1]);
+  const result = data.filter(d => d.original_publication_year >= range[0] && d.original_publication_year < range[1] &&
+                                  genres.includes(d.tag_name)); // && titles.includes(d.title) ????
 
   return result;
 }
@@ -819,4 +852,204 @@ function scrolled() {
 
 function myDelta() {
   return -d3.event.deltaY * (d3.event.deltaMode ? 120 : 1) / 1500;
+}
+
+
+function genMenu() {
+
+dataGenre.sort(function (a,b) {return d3.ascending(a.tag_name, b.tag_name);});
+genres = d3.map(dataGenre, function(d){return d.tag_name;}).keys();
+console.log(genres);
+
+dataTitle.sort(function (a,b) {return d3.ascending(a.title, b.title);});
+titles = d3.map(dataTitle, function(d){return d.title;}).keys();
+
+$('#multiselectGenre').multiselect({
+  buttonWidth : '160px',
+  includeSelectAllOption : true,
+  enableFiltering: true,
+  filterPlaceholder: 'Search',
+  nonSelectedText: 'Select a Genre',
+  selectAllText: 'Select All',
+  nSelectedText: ' selected elements',
+  allSelectedText: 'All Genre'
+});
+
+d3.select("#multiselectGenre").selectAll("option")
+    .data(genres)
+    .enter()
+    .append("option")
+    .text(function(d){return d;})
+    .attr("value",function(d){return d;});
+
+$('#multiselectGenre').multiselect('rebuild');
+
+
+$('#multiselectTitle').multiselect({
+  buttonWidth : '160px',
+  includeSelectAllOption : true,
+  enableFiltering: true,
+  filterPlaceholder: 'Search',
+  nonSelectedText: 'Select a Title',
+  selectAllText: 'Select All',
+  nSelectedText: ' selected elements',
+  allSelectedText: 'All Books'
+});
+
+d3.select("#multiselectTitle").selectAll("option")
+    .data(titles)
+    .enter()
+    .append("option")
+    .text(function(d){return d;})
+    .attr("value",function(d){return d;});
+
+$('#multiselectTitle').multiselect('rebuild');
+
+/*
+$.each(cibo_data, function(key, value) {
+     $('#multiselectGenre')
+         .append($("<option></option>")
+                    .attr("value",key)
+                    .text(value["label"]));
+});
+$('#multiselectGenre').multiselect('rebuild');
+
+
+var selector = d3.select("#multiselectGenre")
+  .selectAll("option")
+  .data(cibo_data)
+  .enter().append("option")
+  .text( function(d){return d.label;})
+  .attr("value", function (d, i) {
+    return i;
+  });
+
+
+groups_data = d3.nest()
+  .key(function(d) {
+    return d.group;
+  })
+  .entries(cibo_data);
+
+console.log(groups_data)
+
+groups = d3.select('#Genre').selectAll('optgroup')
+  .data(groups_data);
+
+groups.enter().append('optgroup')
+  .attr("label", function(d) {
+    return d.key;
+  });
+
+cibo = groups.selectAll("option")
+  .data(function(d) {
+    return d.values;
+  });
+
+
+cibo.enter().append("option")
+  .text(function(d) {
+    return d.label;
+  })
+  .attr("value", function(d) { return d.label;});
+
+
+var on_selection_changed = function() {
+  so_values = []
+//  for so in d3.select('#Genre').node().selectedOptions(){
+//        so_values.push(so.value)
+//  }
+  console.log(so_values)
+}
+
+$('#Genre').multiselect
+  buttonWidth: '300px'
+  maxHeight: 400
+  enableClickableOptGroups: true
+  enableCollapsibleOptGroups: true
+  enableFiltering: true
+  filterPlaceholder: 'Cerca'
+  includeSelectAllOption: true
+  selectAllJustVisible: false
+  selectAllText: 'Selecionar tudo'
+  nSelectedText: ' Elemetento selecionado'
+  allSelectedText: 'Todos os elementos selecionados'
+  nonSelectedText: 'Nenhum elemento selecionado'
+  onChange: on_selection_changed
+  onSelectAll: on_selection_changed
+  onDeselectAll: on_selection_changed
+  */
+  /*
+  var selector = d3.select("#Title")
+    //  .append("select")
+      .attr("id", "titleSelector")
+      .selectAll("option")
+      .data(dataGenre)
+      .enter().append("option")
+      .text( function(d){return d.title;})
+      .style("text-overflow", "ellipsis")
+      .attr("value", function (d, i) {
+        return i;
+      });
+      */
+}
+/*
+$(document).ready(function() {
+  $('#multiselectGenre').multiselect({
+    buttonWidth : '160px',
+    includeSelectAllOption : true,
+    enableFiltering: true,
+    filterPlaceholder: 'Search',
+		nonSelectedText: 'Select a Genre',
+    selectAllText: 'Select all',
+    nSelectedText: ' selected elements',
+    allSelectedText: 'All selected'
+  });
+  $('#multiselectGenre').multiselect('selectAll', false);
+  $('#multiselectGenre').multiselect('updateButtonText');
+});
+*/
+function getSelectedValues() {
+  var selectedGenreVal = $("#multiselectGenre").val();
+  var selectedTitleVal = $("#multiselectTitle").val();
+  if (selectedGenreVal != null && selectedTitleVal != null) {
+    genValues = []
+    titleValues = []
+	  for(var i=0; i<selectedGenreVal.length; i++){
+		    genValues.push(selectedGenreVal[i])
+	  }
+    for(var i=0; i<selectedTitleVal.length; i++){
+ 		    titleValues.push(selectedTitleVal[i])
+ 	    }
+    console.log(genValues)
+    genres = genValues;
+    titles = titleValues;
+    update();
+    }
+  else if (selectedGenreVal == null && selectedTitleVal != null) {
+    genres = d3.map(dataGenre, function(d){return d.tag_name;}).keys();
+    titleValues = []
+
+  for(var i=0; i<selectedTitleVal.length; i++){
+      titleValues.push(selectedTitleVal[i])
+    }
+    titles = titleValues;
+    update();
+  }
+
+  else if (selectedGenreVal != null && selectedTitleVal == null) {
+    genValues = []
+
+	  for(var i=0; i<selectedGenreVal.length; i++){
+		    genValues.push(selectedGenreVal[i])
+      }
+    genres = genValues;
+    titles = d3.map(dataTitle, function(d){return d.title;}).keys();
+    update();
+  }
+  else {
+    genres = d3.map(dataGenre, function(d){return d.tag_name;}).keys();
+    titles = d3.map(dataTitle, function(d){return d.title;}).keys();
+    update();
+  }
 }
