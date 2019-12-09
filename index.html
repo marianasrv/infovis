@@ -1,38 +1,47 @@
 <html>
-  <head>
-   <title>InfoVis 2019 - Grupo 11</title>
-   <link rel="stylesheet" href="project.css">
-   <script src="d3.v5.js" charset="utf-8"></script>
-   <script src="App.js" charset="utf-8"></script>
-  </head>
 
-  <body>
+<head>
+  <title>InfoVis 2019 - Grupo 11</title>
+  <link rel="stylesheet" href="project.css">
+  <script src="jquery-2.1.3.min.js"></script>
+  <link rel="stylesheet" href="bootstrap-3.3.2.min.css" type="text/css">
+  <link rel="stylesheet" href="bootstrap-multiselect.css">
+  <script src="d3.v5.js" charset="utf-8"></script>
+
+  <script src="bootstrap-3.3.2.min.js" charset="utf-8"></script>
+  <script src="bootstrap-multiselect.js" charset="utf-8"></script>
+  <script src="App.js" charset="utf-8"></script>
+</head>
+
+<body>
   <!--  <span class="btn" id="new">New</span>
     <span class="btn" id="old">Old</span> -->
-    <div class="App">
-      <header class="AppHeader">
-        <h2>Information Visualization - Group 11</h2>
-      </header>
-      <div id="FirstRow">
-        <div id="Menus">
-          <button class="button  arrow">Select Genre</button><br/>
-          <button class="button  arrow">Select Author</button><br/>
-          <button class="button  arrow">Select Title</button><br/>
-        </div>
-        <div id="scatterplot"></div>
+  <div class="App">
+    <header class="AppHeader">
+      <h2>Information Visualization - Group 11</h2>
+    </header>
+    <div id="FirstRow">
+      <div id="Menus">
+        <select id="multiselectGenre" multiple="multiple" onchange="getSelectedValues()"></select><br />
+        <select class="button  arrow" id="Author">
+          <option selected="true">Select Author</option>
+        </select><br />
+        <select id="multiselectTitle" multiple="multiple" onchange="getSelectedValues()"></select><br />
       </div>
-      <br/>
-      <div id="SecondRow">
-        <div id="Left">
-          <div id="Network">Network Chart</div>
-        </div>
-        <div id="Right">
-          <div id="lineChart"></div>
-          <br/>
-          <div id="BarChart"></div>
-        </div>
+      <div id="scatterplot"></div>
+    </div>
+    <br />
+    <div id="SecondRow">
+      <div id="Left">
+        <div id="Network">Network Chart</div>
+      </div>
+      <div id="Right">
+        <div id="lineChart"></div>
+        <br />
+        <div id="BarChart"></div>
       </div>
     </div>
-  </body>
+  </div>
+</body>
 
 </html>
