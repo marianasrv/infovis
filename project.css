@@ -20,9 +20,9 @@
   flex-direction: column;
 }
 
-
 .MainBar {
-  overflow: scroll;
+  max-height: 300px;
+  overflow-y: scroll;
 }
 
 
