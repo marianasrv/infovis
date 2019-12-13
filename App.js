@@ -1,4 +1,4 @@
-var dataLine, dataScat, dataBar, dataGenre, dataTitle, dataContext;
+var dataLine, dataScat, dataBar, dataNet, dataGenre, dataTitle, dataAuthors, dataContext;
 var svgBar, widthBar, heightBar;
 var yScaleBar, xScaleBar, yZoom;
 var groups, cibo_data;
@@ -9,22 +9,24 @@ var brush;
 var xScaleOverview, xScale, yScale;
 var widthLine, widthScat, heightScat;
 var line, xAxis;
-var focus;
+var focus, context;
 var height;
 var dispatch;
 var selectedBar, selectedBars, selectedDotsOnScat, selectedCircle, selectedOnLine, selectedDotOnLine;
 var tooltip, showTooltip, hideTooltip, moveTooltip, showTooltipLine;
-var genres, titles;
+var genres, titles, authors, allAuthors, auxAuthors;
 
 
 
-d3.csv("sampleBook.csv").then(function(data) {
+d3.csv("sampleBooks.csv").then(function(data) {
   //full_dataScat = data;
   dataLine = data;
   dataScat = data;
   dataBar = data;
   dataGenre = data;
-  dataTitle = data.sort(function (a,b) {return d3.ascending(a.title, b.title);});
+  dataTitle = data;
+  dataAuthors = data;
+  // dataNet = data.slice(0, 10);
   dispatch = d3.dispatch("MouseOver", "MouseLeave");
 
   tooltip = d3.select("body")
@@ -185,7 +187,7 @@ function genLineChart() {
     .attr("class", "focus")
     .attr("transform", "translate(30,0)");
 
-  var context = svg.append("g")
+  context = svg.append("g")
     .attr("class", "context")
     .attr("height", heightOverview)
     .attr("transform", "translate(30,150)");
@@ -294,7 +296,7 @@ function genLineChart() {
       selectedDotsOnScat.attr("fill", "#5C9AA8");
       selectedDotsOnScat.attr("opacity", 0.5);
       selectedDotsOnScat.attr("r", 3);
-      selectedDotsOnScat.style("z-index", "initial");
+      selectedDotsOnScat.lower();
     }
     if (selectedDotOnLine) {
       selectedDotOnLine.attr("fill", "#5C9AA8");
@@ -303,7 +305,7 @@ function genLineChart() {
       selectedCircle.attr("fill", "#5C9AA8");
       selectedCircle.attr("opacity", 0.5);
       selectedCircle.attr("r", 3);
-      selectedCircle.style("z-index", "initial");
+      selectedCircle.lower();
     }
     if (selectedOnLine) {
       selectedOnLine.attr("fill", "#5C9AA8");
@@ -314,7 +316,8 @@ function genLineChart() {
     selectedCircle.attr("opacity", 1);
     selectedCircle.attr("r", 7);
     selectedCircle.attr("fill", "#F1A758");
-    selectedCircle.style("z-index", "-1");
+    selectedCircle.raise();
+
 
     selectedOnLine = focus.select("circle[year =\'" + book.original_publication_year + "\']");
     selectedOnLine.attr("fill", "#F1A758");
@@ -323,7 +326,8 @@ function genLineChart() {
     selectedDotsOnScat.attr("opacity", 1);
     selectedDotsOnScat.attr("r", 7);
     selectedDotsOnScat.attr("fill", "#F1A758");
-    selectedDotsOnScat.style("z-index", "-1");
+    selectedDotsOnScat.raise();
+
 
     selectedDotOnLine = focus.select("circle[year =\'" + book.key + "\']");
     selectedDotOnLine.attr("fill", "#F1A758");
@@ -346,13 +350,13 @@ function genLineChart() {
       selectedDotsOnScat.attr("fill", "#5C9AA8");
       selectedDotsOnScat.attr("opacity", 0.5);
       selectedDotsOnScat.attr("r", 3);
-      selectedDotsOnScat.style("z-index", "initial");
+      selectedDotsOnScat.lower();
     }
     if (selectedCircle) {
       selectedCircle.attr("fill", "#5C9AA8");
       selectedCircle.attr("opacity", 0.5);
       selectedCircle.attr("r", 3);
-      selectedCircle.style("z-index", "initial");
+      selectedCircle.lower();
     }
     if (selectedOnLine) {
       selectedOnLine.attr("fill", "#5C9AA8");
@@ -398,20 +402,8 @@ function brushended() {
 }
 
 function update() {
-  line = d3.line()
-    .x(function(d) {
-      return xScale(d.key);
-    })
-    .y(function(d) {
-      return yScale(d.value);
-    })
-  focus.select(".line").remove();
-  focus.append("path")
-    .datum(filterData(dataLine, xScale.domain()))
-    .attr("class", "line")
-    .style("fill", "none")
-    .style("stroke", "#5C9AA8")
-    .attr("d", line);
+
+
 
   focus.selectAll(".dot").remove();
   focus.selectAll("circle")
@@ -443,6 +435,22 @@ function update() {
     .attr("transform", "translate(0," + (height + 5) + ")")
     .call(xAxis);
 
+
+  focus.select(".line").remove();
+  focus.append("path")
+    .datum(filterData(dataLine, xScale.domain()))
+    .attr("class", "line")
+    .style("fill", "none")
+    .style("stroke", "#5C9AA8");
+
+  line = d3.line()
+    .x(function(d) {
+      return xScale(d.key);
+    })
+    .y(function(d) {
+      return yScale(d.value);
+    });
+  focus.select(".line").attr("d", line);
 
   svgScat.selectAll(".dot").remove();
   svgScat.selectAll("circle")
@@ -479,6 +487,9 @@ function update() {
     .attr("title", function(d) {
       return d.title;
     })
+    .attr("author", function(d) {
+      return d.authors;
+    })
     .attr("year", function(d) {
       return d.original_publication_year;
     });
@@ -492,7 +503,70 @@ function update() {
 
 function filterData(data, range) {
 
-  var dataFilter = data.filter(d => genres.includes(d.tag_name) ); // && titles.includes(d.title) ????
+  var selectedTitleVal = $("#multiselectTitle").val();
+  var selectedAuthorVal = $("#multiselectAuthor").val();
+  var dataFilter;
+  var result;
+
+  if (selectedTitleVal != null) {
+    dataFilter = data.filter(d => titles.includes(d.title));
+    var years = [d3.min(dataFilter, function(d) {
+        return d.original_publication_year;
+      }) - 1,
+      d3.max(dataFilter, function(d) {
+        return d.original_publication_year;
+      }) + 1
+    ];
+
+    xScale.domain(years);
+
+    if ((xScale.domain()[1] - xScale.domain()[0]) < 4) {
+      xAxis.ticks((xScale.domain()[1] - xScale.domain()[0]) / 2 + 1);
+      if ((xScale.domain()[1] - xScale.domain()[0]) == 1) {
+        xAxis.ticks(1);
+      }
+    } else if ((xScale.domain()[1] - xScale.domain()[0]) > 45) {
+
+      xAxis.ticks((xScale.domain()[1] - xScale.domain()[0]) / 4);
+
+    } else {
+      xAxis.ticks((xScale.domain()[1] - xScale.domain()[0]) / 2);
+
+    }
+    context.select(".x.brush")
+      .call(brush.move, years.map(xScaleOverview));
+
+  } else {
+    if (selectedAuthorVal != null) {
+      dataFilter = data.filter(d => genres.includes(d.tag_name) && d.authors.split(",").some(a => authors.includes(a)));
+      var years = [d3.min(dataFilter, function(d) {
+          return d.original_publication_year;
+        }) - 1,
+        d3.max(dataFilter, function(d) {
+          return d.original_publication_year;
+        }) + 1
+      ];
+
+      xScale.domain(years);
+      if ((xScale.domain()[1] - xScale.domain()[0]) < 4) {
+        xAxis.ticks((xScale.domain()[1] - xScale.domain()[0]) / 2 + 1);
+        if ((xScale.domain()[1] - xScale.domain()[0]) == 1) {
+          xAxis.ticks(1);
+        }
+      } else if ((xScale.domain()[1] - xScale.domain()[0]) > 45) {
+
+        xAxis.ticks((xScale.domain()[1] - xScale.domain()[0]) / 4);
+
+      } else {
+        xAxis.ticks((xScale.domain()[1] - xScale.domain()[0]) / 2);
+
+      }
+      context.select(".x.brush")
+        .call(brush.move, years.map(xScaleOverview));
+    } else {
+      dataFilter = data.filter(d => genres.includes(d.tag_name));
+    }
+  }
   dataFilter = d3.nest()
     .key(function(d) {
       return d.original_publication_year;
@@ -511,15 +585,85 @@ function filterData(data, range) {
     return d3.ascending(a.key, b.key);
   });
 
-  const result = dataFilter.filter(d => d.key >= range[0] && d.key < range[1] );
+  if (selectedTitleVal != null || selectedAuthorVal != null) {
+    result = dataFilter;
+    console.log(result)
+  } else {
+    result = dataFilter.filter(d => d.key >= range[0] && d.key < range[1]);
+  }
 
   return result;
 }
 
 function filterDataScat(data, range) {
 
-  const result = data.filter(d => d.original_publication_year >= range[0] && d.original_publication_year < range[1] &&
-                                  genres.includes(d.tag_name)); // && titles.includes(d.title) ????
+  var selectedTitleVal = $("#multiselectTitle").val();
+  var selectedAuthorVal = $("#multiselectAuthor").val();
+  var dataFilter;
+  var result;
+
+  if (selectedTitleVal != null) {
+    dataFilter = data.filter(d => titles.includes(d.title));
+    var years = [d3.min(dataFilter, function(d) {
+        return d.original_publication_year;
+      }) - 1,
+      d3.max(dataFilter, function(d) {
+        return d.original_publication_year;
+      }) + 1
+    ];
+    xScaleScat.domain(years);
+    if ((xScaleScat.domain()[1] - xScaleScat.domain()[0]) < 4) {
+
+      xAxisScat.ticks((xScaleScat.domain()[1] - xScaleScat.domain()[0]) / 2 + 1);
+      if ((xScaleScat.domain()[1] - xScaleScat.domain()[0]) == 1) {
+
+        xAxisScat.ticks(1);
+      }
+    } else if ((xScaleScat.domain()[1] - xScaleScat.domain()[0]) > 45) {
+
+      xAxisScat.ticks((xScaleScat.domain()[1] - xScaleScat.domain()[0]) / 4);
+    } else {
+      xAxisScat.ticks(xScaleScat.domain()[1] - xScaleScat.domain()[0]);
+    }
+    context.select(".x.brush")
+      .call(brush.move, years.map(xScaleOverview));
+
+    result = dataFilter;
+  } else {
+    if (selectedAuthorVal != null) {
+      result = data.filter(d => d.authors.split(",").some(a => authors.includes(a)) &&
+        genres.includes(d.tag_name));
+      var years = [d3.min(result, function(d) {
+          return d.original_publication_year;
+        }) - 1,
+        d3.max(result, function(d) {
+          return d.original_publication_year;
+        }) + 1
+      ];
+      xScaleScat.domain(years);
+      if ((xScaleScat.domain()[1] - xScaleScat.domain()[0]) < 4) {
+
+        xAxisScat.ticks((xScaleScat.domain()[1] - xScaleScat.domain()[0]) / 2 + 1);
+        if ((xScaleScat.domain()[1] - xScaleScat.domain()[0]) == 1) {
+
+          xAxisScat.ticks(1);
+        }
+      } else if ((xScaleScat.domain()[1] - xScaleScat.domain()[0]) > 45) {
+
+        xAxisScat.ticks((xScaleScat.domain()[1] - xScaleScat.domain()[0]) / 4);
+      } else {
+        xAxisScat.ticks(xScaleScat.domain()[1] - xScaleScat.domain()[0]);
+      }
+      context.select(".x.brush")
+        .call(brush.move, years.map(xScaleOverview));
+
+    } else {
+      result = data.filter(d => d.original_publication_year >= range[0] && d.original_publication_year < range[1] &&
+        genres.includes(d.tag_name));
+
+    }
+  }
+
 
   return result;
 }
@@ -607,6 +751,9 @@ function genScatterplot() {
     })
     .attr("year", function(d) {
       return d.original_publication_year;
+    })
+    .attr("author", function(d) {
+      return d.authors;
     });
 
 }
@@ -633,7 +780,6 @@ function genBarChart() {
     .call(zoomer);
 
   var padding = 30;
-  var bar_w = Math.floor((widthBar - padding * 2) / dataBar.length) - 1;
 
 
   dataBar.forEach(function(d, i) {
@@ -658,19 +804,23 @@ function genBarChart() {
     .range([heightBar - padding, padding]);
 
   xScaleBar = d3.scaleLinear()
-  //  .domain([0, 5000000])
+    //  .domain([0, 5000000])
     .range([0, widthBar - 2 * padding]);
 
   yZoom = d3.scaleLinear()
     .range([heightBar - padding, padding])
     .domain([heightBar - padding, padding]);
 
-    bar_h = yScaleBar.bandwidth() * (1/5 * filterDataScat(dataBar, xScale.domain()).length);
-    var selected = yScaleBar.domain()
-      .filter(function(d, i) { return (heightBar - yScaleBar(i + 1) + i * (bar_h + 10)  <= (heightBar - 30) && (30) <= heightBar - yScaleBar(i + 1) + i * (bar_h + 10)); });
+  bar_h = yScaleBar.bandwidth() * (1 / 5 * filterDataScat(dataBar, xScale.domain()).length);
+  var selected = yScaleBar.domain()
+    .filter(function(d, i) {
+      return (heightBar - yScaleBar(i + 1) + i * (bar_h + 10) <= (heightBar - 30) && (30) <= heightBar - yScaleBar(i + 1) + i * (bar_h + 10));
+    });
 
-    var maxXScale = d3.max(filterDataScat(dataBar, xScale.domain()), function(d, i) { return selected.indexOf(i + 1) > -1 ? d.work_ratings_count : 0; }) + 50000;
-    xScaleBar.domain([0, maxXScale]);
+  var maxXScale = d3.max(filterDataScat(dataBar, xScale.domain()), function(d, i) {
+    return selected.indexOf(i + 1) > -1 ? d.work_ratings_count : 0;
+  }) + 50000;
+  xScaleBar.domain([0, maxXScale]);
 
   xAxisBar = d3.axisBottom() // create a d3 axis
     .scale(xScaleBar); // fit to our scale
@@ -680,15 +830,15 @@ function genBarChart() {
     .tickSize(0)
     .tickSizeOuter(0);
 
-    defs = svgBar.append("defs");
+  defs = svgBar.append("defs");
 
-      defs.append("clipPath")
-        .attr("id", "path")
-        .append("rect")
-        .attr("x", padding)
-        .attr("y", 30)
-        .attr("width", 670)
-        .attr("height", 190);
+  defs.append("clipPath")
+    .attr("id", "path")
+    .append("rect")
+    .attr("x", padding)
+    .attr("y", 30)
+    .attr("width", 670)
+    .attr("height", 190);
 
   mainBar = svgBar.append("g")
     .attr("class", "BarWrapper")
@@ -699,15 +849,18 @@ function genBarChart() {
 
 
 
-/*
-    mainBar.append("g") // create a 'g' element to match our 'y' axis
-        .attr("transform", "translate(30,0)") // 30 is the padding
-        .attr("class","yaxis") // give css style
-        .call(yAxisBar);
-*/
-    mainBar.selectAll("rect")
+  /*
+      mainBar.append("g") // create a 'g' element to match our 'y' axis
+          .attr("transform", "translate(30,0)") // 30 is the padding
+          .attr("class","yaxis") // give css style
+          .call(yAxisBar);
+  */
+  var bar = mainBar.selectAll("g.bar")
     .data(filterDataScat(dataBar, xScale.domain()))
-    .enter().append("rect") // for each item append a bar
+    .enter().append("g")
+    .attr("class", "bar");
+
+  bar.append("rect") // for each item append a bar
     .on("mouseover", function(d) {
       dispatch.call("MouseOver", d, d);
       showTooltip(d);
@@ -725,22 +878,36 @@ function genBarChart() {
       return xScaleBar(d.work_ratings_count); // each bar width is a score
     })
     .attr("y", function(d, i) { // d -> each item | i -> each item's index
-      return heightBar - yScaleBar(i + 1) + i * (bar_h + 10); // com legenda : sem "heightBar -"
+      return heightBar - yScaleBar(i + 1) + i * (bar_h + 10);
     })
     .attr("x", function(d) {
       return padding; // fit to our scale
     })
     .attr("fill", "#5C9AA8")
-    .attr("class", "bar")
+    .attr("class", "colorBar")
     .attr("title", function(d) {
       return d.title;
     })
     .attr("year", function(d) {
       return d.original_publication_year;
     })
-    .attr("popularity" , function(d) {
+    .attr("author", function(d) {
+      return d.authors;
+    })
+    .attr("popularity", function(d) {
       return d.work_ratings_count;
     });
+
+  bar.append("text")
+    .attr("x", padding + 5)
+    .attr("y", function(d, i) {
+      return heightBar - yScaleBar(i + 1) + bar_h / 2 + i * (bar_h + 10);
+    })
+    .text(function(d, i) {
+      return i + 1;
+    })
+    .style("fill", "#ffffff");
+
 
 
 
@@ -750,13 +917,13 @@ function genBarChart() {
     .attr("class", "xaxis") // give css style
     .call(xAxisBar);
 
-    d3.select(".BarWrapper").append("text")
-      .attr("transform",
-        "translate(" + (widthBar / 2) + " ," +
-        (heightBar - 1) + ")")
-      .style("text-anchor", "middle")
-      .style("font-size", 10)
-      .text("Reviews (Popularity)");
+  d3.select(".BarWrapper").append("text")
+    .attr("transform",
+      "translate(" + (widthBar / 2) + " ," +
+      (heightBar - 1) + ")")
+    .style("text-anchor", "middle")
+    .style("font-size", 10)
+    .text("Reviews (Popularity)");
 
 
 
@@ -772,12 +939,11 @@ function scrolled() {
   if (d3.event.sourceEvent.deltaY > 0) {
     //down
 
-    if ((yZoom.domain()[1] - (bar_h + 10) - yScaleBar.step()) >= (heightBar - 30 - (bar_h + 10 + yScaleBar.step())*(filterDataScat(dataBar, xScale.domain()).length ))) {
+    if ((yZoom.domain()[1] - (bar_h + 10) - yScaleBar.step()) >= (heightBar - 30 - (bar_h + 10 + yScaleBar.step()) * (filterDataScat(dataBar, xScale.domain()).length))) {
       yZoom.domain([yZoom.domain()[0] - (bar_h + 10) - yScaleBar.step(), yZoom.domain()[1] - (bar_h + 10) - yScaleBar.step()]);
     }
-  }
-   else {
-     // up
+  } else {
+    // up
     if ((yZoom.domain()[0] + (bar_h + 10) + yScaleBar.step()) <= (heightBar - 30 + yScaleBar.step())) {
       yZoom.domain([yZoom.domain()[0] + (bar_h + 10) + yScaleBar.step(), yZoom.domain()[1] + (bar_h + 10) + yScaleBar.step()]);
     }
@@ -792,24 +958,30 @@ function scrolled() {
   yScaleBar.range([yZoom(originalRange[0]), yZoom(originalRange[1])]);
 
   var selected = yScaleBar.domain()
-    .filter(function(d, i) { return (heightBar - yScaleBar(i + 1) + i * (bar_h + 10)  <= (heightBar - 30) && (30) <= heightBar - yScaleBar(i + 1) + i * (bar_h + 10)); });
+    .filter(function(d, i) {
+      return (heightBar - yScaleBar(i + 1) + i * (bar_h + 10) <= (heightBar - 30) && (30) <= heightBar - yScaleBar(i + 1) + i * (bar_h + 10));
+    });
 
 
-  var newMaxXScale = d3.max(filterDataScat(dataBar, xScale.domain()), function(d, i) { return selected.indexOf(i + 1) > -1 ? d.work_ratings_count : 0; }) + 50000;
+  var newMaxXScale = d3.max(filterDataScat(dataBar, xScale.domain()), function(d, i) {
+    return selected.indexOf(i + 1) > -1 ? d.work_ratings_count : 0;
+  }) + 50000;
   xScaleBar.domain([0, newMaxXScale]);
 
 
-   //Update the x axis of the big chart
-   d3.select(".BarWrapper")
-     .select(".xaxis")
-     .transition().duration(50)
-     .call(xAxisBar);
+  //Update the x axis of the big chart
+  d3.select(".BarWrapper")
+    .select(".xaxis")
+    .transition().duration(50)
+    .call(xAxisBar);
 
   mainBar.selectAll(".bar").remove();
-  mainBar.selectAll("rect")
+  var bar = mainBar.selectAll("g.bar")
     .data(filterDataScat(dataBar, xScale.domain()))
-    .enter().append("rect")
-    .attr("class", "bar")
+    .enter().append("g")
+    .attr("class", "bar");
+
+  bar.append("rect") // for each item append a bar
     .on("mouseover", function(d) {
       dispatch.call("MouseOver", d, d);
       showTooltip(d);
@@ -822,7 +994,6 @@ function scrolled() {
       dispatch.call("MouseOver", d, d);
       moveTooltip(d);
     })
-    .attr("fill", "#5C9AA8")
     .attr("height", bar_h) // each bar height depends on the number of bars
     .attr("width", function(d) {
       return xScaleBar(d.work_ratings_count); // each bar width is a score
@@ -833,19 +1004,30 @@ function scrolled() {
     .attr("x", function(d) {
       return 30; // fit to our scale
     })
+    .attr("fill", "#5C9AA8")
+    .attr("class", "colorBar")
     .attr("title", function(d) {
       return d.title;
     })
     .attr("year", function(d) {
       return d.original_publication_year;
     })
-    .attr("popularity" , function(d) {
-      return d.work_ratings_count;
+    .attr("author", function(d) {
+      return d.authors;
     })
-    .transition().duration(150);
+    .attr("popularity", function(d) {
+      return d.work_ratings_count;
+    });
 
-
-
+  bar.append("text")
+    .attr("x", 30 + 5)
+    .attr("y", function(d, i) {
+      return heightBar - yScaleBar(i + 1) + bar_h / 2 + i * (bar_h + 10);
+    })
+    .text(function(d, i) {
+      return i + 1;
+    })
+    .style("fill", "#ffffff");
 
 
 }
@@ -857,199 +1039,207 @@ function myDelta() {
 
 function genMenu() {
 
-dataGenre.sort(function (a,b) {return d3.ascending(a.tag_name, b.tag_name);});
-genres = d3.map(dataGenre, function(d){return d.tag_name;}).keys();
-console.log(genres);
+  dataGenre.sort(function(a, b) {
+    return d3.ascending(a.tag_name, b.tag_name);
+  });
+  genres = d3.map(dataGenre, function(d) {
+    return d.tag_name;
+  }).keys();
 
-dataTitle.sort(function (a,b) {return d3.ascending(a.title, b.title);});
-titles = d3.map(dataTitle, function(d){return d.title;}).keys();
+  dataTitle.sort(function(a, b) {
+    return d3.ascending(a.title, b.title);
+  });
+  titles = d3.map(dataTitle, function(d) {
+    return d.title;
+  }).keys();
 
-$('#multiselectGenre').multiselect({
-  buttonWidth : '160px',
-  includeSelectAllOption : true,
-  enableFiltering: true,
-  filterPlaceholder: 'Search',
-  nonSelectedText: 'Select a Genre',
-  selectAllText: 'Select All',
-  nSelectedText: ' selected elements',
-  allSelectedText: 'All Genre'
-});
+  dataAuthors.sort(function(a, b) {
+    return d3.ascending(a.authors, b.authors);
+  });
+  auxAuthors = d3.map(dataAuthors, function(d) {
+    return d.authors;
+  }).keys();
 
-d3.select("#multiselectGenre").selectAll("option")
+  authors = []
+  for (var i = 0; i < auxAuthors.length; i++) {
+    if (auxAuthors[i].includes(",")) {
+      for (e of auxAuthors[i].split(",")) {
+        if (!authors.includes(e)) {
+          authors.push(e)
+        }
+      }
+    } else {
+      if (!authors.includes(auxAuthors[i])) {
+        authors.push(auxAuthors[i]);
+      }
+    }
+  }
+
+  authors.sort();
+
+  allAuthors = authors;
+
+
+
+  $('#multiselectGenre').multiselect({
+    buttonWidth: '160px',
+    includeSelectAllOption: true,
+    enableFiltering: true,
+    enableCaseInsensitiveFiltering: true,
+    filterPlaceholder: 'Search',
+    nonSelectedText: 'Select a Genre',
+    selectAllText: 'Select All',
+    nSelectedText: ' selected elements',
+    allSelectedText: 'All Genre'
+  });
+
+  d3.select("#multiselectGenre").selectAll("option")
     .data(genres)
     .enter()
     .append("option")
-    .text(function(d){return d;})
-    .attr("value",function(d){return d;});
+    .text(function(d) {
+      return d;
+    })
+    .attr("value", function(d) {
+      return d;
+    });
 
-$('#multiselectGenre').multiselect('rebuild');
+  $('#multiselectGenre').multiselect('rebuild');
+
+  $('#multiselectAuthor').multiselect({
+    buttonWidth: '160px',
+    includeSelectAllOption: true,
+    enableFiltering: true,
+    enableCaseInsensitiveFiltering: true,
+    filterPlaceholder: 'Search',
+    nonSelectedText: 'Select an Author',
+    selectAllText: 'Select All',
+    nSelectedText: ' selected elements',
+    allSelectedText: 'All Authors'
+  });
+
+  d3.select("#multiselectAuthor").selectAll("option")
+    .data(authors)
+    .enter()
+    .append("option")
+    .text(function(d) {
+      return d;
+    })
+    .attr("value", function(d) {
+      return d;
+    });
+
+  $('#multiselectAuthor').multiselect('rebuild');
 
 
-$('#multiselectTitle').multiselect({
-  buttonWidth : '160px',
-  includeSelectAllOption : true,
-  enableFiltering: true,
-  filterPlaceholder: 'Search',
-  nonSelectedText: 'Select a Title',
-  selectAllText: 'Select All',
-  nSelectedText: ' selected elements',
-  allSelectedText: 'All Books'
-});
+  $('#multiselectTitle').multiselect({
+    buttonWidth: '160px',
+    includeSelectAllOption: true,
+    enableFiltering: true,
+    enableCaseInsensitiveFiltering: true,
+    filterPlaceholder: 'Search',
+    nonSelectedText: 'Select a Title',
+    selectAllText: 'Select All',
+    nSelectedText: ' selected elements',
+    allSelectedText: 'All Books'
+  });
 
-d3.select("#multiselectTitle").selectAll("option")
+  d3.select("#multiselectTitle").selectAll("option")
     .data(titles)
     .enter()
     .append("option")
-    .text(function(d){return d;})
-    .attr("value",function(d){return d;});
+    .text(function(d) {
+      return d;
+    })
+    .attr("value", function(d) {
+      return d;
+    });
 
-$('#multiselectTitle').multiselect('rebuild');
+  $('#multiselectTitle').multiselect('rebuild');
 
-/*
-$.each(cibo_data, function(key, value) {
-     $('#multiselectGenre')
-         .append($("<option></option>")
-                    .attr("value",key)
-                    .text(value["label"]));
-});
-$('#multiselectGenre').multiselect('rebuild');
-
-
-var selector = d3.select("#multiselectGenre")
-  .selectAll("option")
-  .data(cibo_data)
-  .enter().append("option")
-  .text( function(d){return d.label;})
-  .attr("value", function (d, i) {
-    return i;
-  });
-
-
-groups_data = d3.nest()
-  .key(function(d) {
-    return d.group;
-  })
-  .entries(cibo_data);
-
-console.log(groups_data)
-
-groups = d3.select('#Genre').selectAll('optgroup')
-  .data(groups_data);
-
-groups.enter().append('optgroup')
-  .attr("label", function(d) {
-    return d.key;
-  });
-
-cibo = groups.selectAll("option")
-  .data(function(d) {
-    return d.values;
-  });
-
-
-cibo.enter().append("option")
-  .text(function(d) {
-    return d.label;
-  })
-  .attr("value", function(d) { return d.label;});
-
-
-var on_selection_changed = function() {
-  so_values = []
-//  for so in d3.select('#Genre').node().selectedOptions(){
-//        so_values.push(so.value)
-//  }
-  console.log(so_values)
 }
 
-$('#Genre').multiselect
-  buttonWidth: '300px'
-  maxHeight: 400
-  enableClickableOptGroups: true
-  enableCollapsibleOptGroups: true
-  enableFiltering: true
-  filterPlaceholder: 'Cerca'
-  includeSelectAllOption: true
-  selectAllJustVisible: false
-  selectAllText: 'Selecionar tudo'
-  nSelectedText: ' Elemetento selecionado'
-  allSelectedText: 'Todos os elementos selecionados'
-  nonSelectedText: 'Nenhum elemento selecionado'
-  onChange: on_selection_changed
-  onSelectAll: on_selection_changed
-  onDeselectAll: on_selection_changed
-  */
-  /*
-  var selector = d3.select("#Title")
-    //  .append("select")
-      .attr("id", "titleSelector")
-      .selectAll("option")
-      .data(dataGenre)
-      .enter().append("option")
-      .text( function(d){return d.title;})
-      .style("text-overflow", "ellipsis")
-      .attr("value", function (d, i) {
-        return i;
-      });
-      */
-}
-/*
-$(document).ready(function() {
-  $('#multiselectGenre').multiselect({
-    buttonWidth : '160px',
-    includeSelectAllOption : true,
-    enableFiltering: true,
-    filterPlaceholder: 'Search',
-		nonSelectedText: 'Select a Genre',
-    selectAllText: 'Select all',
-    nSelectedText: ' selected elements',
-    allSelectedText: 'All selected'
-  });
-  $('#multiselectGenre').multiselect('selectAll', false);
-  $('#multiselectGenre').multiselect('updateButtonText');
-});
-*/
 function getSelectedValues() {
   var selectedGenreVal = $("#multiselectGenre").val();
   var selectedTitleVal = $("#multiselectTitle").val();
-  if (selectedGenreVal != null && selectedTitleVal != null) {
+  var selectedAuthorVal = $("#multiselectAuthor").val();
+  if (selectedGenreVal != null) {
     genValues = []
-    titleValues = []
-	  for(var i=0; i<selectedGenreVal.length; i++){
-		    genValues.push(selectedGenreVal[i])
-	  }
-    for(var i=0; i<selectedTitleVal.length; i++){
- 		    titleValues.push(selectedTitleVal[i])
- 	    }
-    console.log(genValues)
-    genres = genValues;
-    titles = titleValues;
-    update();
+
+    for (var i = 0; i < selectedGenreVal.length; i++) {
+      genValues.push(selectedGenreVal[i])
     }
-  else if (selectedGenreVal == null && selectedTitleVal != null) {
-    genres = d3.map(dataGenre, function(d){return d.tag_name;}).keys();
+
+    genres = genValues;
+    /*
+
+     SE FOR PARA FILTRAR OS AUTORES E TITULOS SELECIONAVEIS TENDO EM CONTA O(S) GENERO(S) SELECIONADO(S)
+     ----------------
+        var dt = dataTitle.filter(function(d) { return genres.includes(d.tag_name);}).sort(function (a,b) {return d3.ascending(a.title, b.title);});
+        titles = d3.map(dt, function(d){return d.title;}).keys();
+
+        var da = dataAuthors.filter(function(d) { return genres.includes(d.tag_name);}).sort(function (a,b) {return d3.ascending(a.authors, b.authors);});
+        var auxAuthors = d3.map(dataAuthors, function(d){return d.authors;}).keys();
+
+        var authrs = []
+        for (var i = 0; i < auxAuthors.length; i++) {
+          if (auxAuthors[i].includes(",")) {
+            for (e of auxAuthors[i].split(",")){
+              if (!authrs.includes(e)){
+                authrs.push(e)
+              }
+            }
+          }
+          else {
+            if (!authrs.includes(auxAuthors[i])){
+              authrs.push(auxAuthors[i]);
+            }
+          }
+        }
+
+        authrs.sort();
+        authors = authrs;
+        */
+
+  } else {
+    genres = d3.map(dataGenre, function(d) {
+      return d.tag_name;
+    }).keys();
+  }
+
+  if (selectedTitleVal != null) {
     titleValues = []
 
-  for(var i=0; i<selectedTitleVal.length; i++){
+    for (var i = 0; i < selectedTitleVal.length; i++) {
       titleValues.push(selectedTitleVal[i])
     }
     titles = titleValues;
-    update();
+  } else {
+    titles = d3.map(dataTitle, function(d) {
+      return d.title;
+    }).keys();
   }
 
-  else if (selectedGenreVal != null && selectedTitleVal == null) {
-    genValues = []
+  if (selectedAuthorVal != null) {
+    authorsValues = []
 
-	  for(var i=0; i<selectedGenreVal.length; i++){
-		    genValues.push(selectedGenreVal[i])
-      }
-    genres = genValues;
-    titles = d3.map(dataTitle, function(d){return d.title;}).keys();
-    update();
+    for (var i = 0; i < selectedAuthorVal.length; i++) {
+      authorsValues.push(selectedAuthorVal[i])
+    }
+    authors = authorsValues;
+
+    //  var dt = dataTitle.filter(function(d) { return d.authors.split(",").some(a => authors.includes(a))}).sort(function (a,b) {return d3.ascending(a.title, b.title);});
+    //  titles = d3.map(dt, function(d){return d.title;}).keys();
+  } else {
+    authors = allAuthors;
   }
-  else {
-    genres = d3.map(dataGenre, function(d){return d.tag_name;}).keys();
-    titles = d3.map(dataTitle, function(d){return d.title;}).keys();
-    update();
+
+  // quando nada selecionado fica como visualizacao inicial
+  if (selectedGenreVal == null && selectedAuthorVal == null && selectedTitleVal == null) {
+    xScale.domain([2010, 2015]);
+    xScaleScat.domain([2010, 2015]);
+    context.select(".x.brush")
+      .call(brush.move, xScale.domain().map(xScaleOverview));
   }
+  update();
 }

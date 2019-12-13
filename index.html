@@ -23,10 +23,12 @@
     <div id="FirstRow">
       <div id="Menus">
         <select id="multiselectGenre" multiple="multiple" onchange="getSelectedValues()"></select><br />
-        <select class="button  arrow" id="Author">
-          <option selected="true">Select Author</option>
-        </select><br />
+        <select id="multiselectAuthor" multiple="multiple" onchange="getSelectedValues()"></select><br />
         <select id="multiselectTitle" multiple="multiple" onchange="getSelectedValues()"></select><br />
+        <div class="row align-items-center">
+          <div class="col-sm-2"><p id="value-range"></p></div>
+          <div class="col-sm"><div id="slider-range"></div></div>
+        </div>
       </div>
       <div id="scatterplot"></div>
     </div>
