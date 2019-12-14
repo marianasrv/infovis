@@ -39,7 +39,7 @@ var opts = {
 };
 
 
-d3.csv("sample4000.csv").then(function(data) {
+d3.csv("sample.csv").then(function(data) {
   //full_dataScat = data;
   dataLine = data;
   dataScat = data;
