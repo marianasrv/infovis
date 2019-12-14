@@ -141,7 +141,7 @@ function genLineChart() {
       }),
       d3.max(dataContext, function(d) {
         return d.key;
-      }) + 1
+      })
     ])
     .range([padding, widthLine - padding]);
 
