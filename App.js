@@ -1,4 +1,5 @@
 var dataLine, dataScat, dataBar, dataNet, dataGenre, dataTitle, dataAuthors, dataContext;
+var dataBarFilter;
 var svgBar, widthBar, heightBar;
 var yScaleBar, xScaleBar, yZoom;
 var groups, cibo_data;
@@ -18,7 +19,7 @@ var genres, titles, authors, allAuthors, auxAuthors;
 
 
 
-d3.csv("sample2000.csv").then(function(data) {
+d3.csv("sample4000.csv").then(function(data) {
   //full_dataScat = data;
   dataLine = data;
   dataScat = data;
@@ -512,10 +513,10 @@ function filterData(data, range) {
       dataFilter = data.filter(d => genres.includes(d.tag_name) && d.authors.split(",").some(a => authors.includes(a)));
       var years = [d3.min(dataFilter, function(d) {
           return d.original_publication_year;
-        }) - 1,
+        }),
         d3.max(dataFilter, function(d) {
           return d.original_publication_year;
-        }) + 1
+        })
       ];
 
       xScale.domain(years);
@@ -547,7 +548,7 @@ function filterData(data, range) {
         return d.average_rating;
       });
     })
-    .entries(dataLine);
+    .entries(dataFilter);
 
   dataFilter.forEach(function(d, i) {
     d.key = +d.key;
@@ -558,7 +559,6 @@ function filterData(data, range) {
 
   if (selectedAuthorVal != null) {
     result = dataFilter;
-    console.log(result)
   } else {
     result = dataFilter.filter(d => d.key >= range[0] && d.key < range[1]);
   }
@@ -579,7 +579,7 @@ function filterDataScat(data, range) {
         genres.includes(d.tag_name));
       var years = [d3.min(result, function(d) {
           return d.original_publication_year;
-        }) - 1,
+        }),
         d3.max(result, function(d) {
           return d.original_publication_year;
         }) + 1
@@ -601,6 +601,7 @@ function filterDataScat(data, range) {
       context.select(".x.brush")
         .call(brush.move, years.map(xScaleOverview));
 
+      console.log(result)
     } else {
       result = data.filter(d => d.original_publication_year >= range[0] && d.original_publication_year < range[1] &&
         genres.includes(d.tag_name));
@@ -739,12 +740,17 @@ function genBarChart() {
       .range([padding, h - padding]);
   */
 
+  dataBarFilter = filterDataScat(dataBar, xScale.domain());
 
-  yScaleBar = d3.scaleBand()
-    .domain(filterDataScat(dataBar, xScale.domain()).map(function(d, i) {
-      return i + 1;
+  yScaleBar = d3.scaleLinear()
+    .domain(dataBarFilter.map(function(d, i) {
+      return i;
     }))
     .range([heightBar - padding, padding]);
+
+  if (yScaleBar.domain().length === 1) {
+    yScaleBar.domain([0, 1])
+  }
 
   xScaleBar = d3.scaleLinear()
     //  .domain([0, 5000000])
@@ -754,14 +760,15 @@ function genBarChart() {
     .range([heightBar - padding, padding])
     .domain([heightBar - padding, padding]);
 
-  bar_h = yScaleBar.bandwidth() * (1 / 5 * filterDataScat(dataBar, xScale.domain()).length);
+  bar_h = 42;
+
   var selected = yScaleBar.domain()
     .filter(function(d, i) {
-      return (heightBar - yScaleBar(i + 1) + i * (bar_h + 10) <= (heightBar - 30) && (30) <= heightBar - yScaleBar(i + 1) + i * (bar_h + 10));
+      return (heightBar - yScaleBar(i) - i * (bar_h + 100) <= (heightBar - padding) && padding <= heightBar - yScaleBar(i) - i * (bar_h + 100));
     });
 
-  var maxXScale = d3.max(filterDataScat(dataBar, xScale.domain()), function(d, i) {
-    return selected.indexOf(i + 1) > -1 ? d.work_ratings_count : 0;
+  var maxXScale = d3.max(dataBarFilter, function(d, i) {
+    return selected.indexOf(i) > -1 ? d.work_ratings_count : 0;
   }) + 50000;
   xScaleBar.domain([0, maxXScale]);
 
@@ -799,7 +806,7 @@ function genBarChart() {
           .call(yAxisBar);
   */
   var bar = mainBar.selectAll("g.bar")
-    .data(filterDataScat(dataBar, xScale.domain()))
+    .data(dataBarFilter)
     .enter().append("g")
     .attr("class", "bar");
 
@@ -821,7 +828,7 @@ function genBarChart() {
       return xScaleBar(d.work_ratings_count); // each bar width is a score
     })
     .attr("y", function(d, i) { // d -> each item | i -> each item's index
-      return heightBar - yScaleBar(i + 1) + i * (bar_h + 10);
+      return heightBar - yScaleBar(i) - i * (bar_h + 100);
     })
     .attr("x", function(d) {
       return padding; // fit to our scale
@@ -844,7 +851,7 @@ function genBarChart() {
   bar.append("text")
     .attr("x", padding + 5)
     .attr("y", function(d, i) {
-      return heightBar - yScaleBar(i + 1) + bar_h / 2 + i * (bar_h + 10);
+      return heightBar - yScaleBar(i) - i * (bar_h + 100) + bar_h / 2;
     })
     .text(function(d, i) {
       return i + 1;
@@ -879,35 +886,44 @@ function scrolled() {
   /////////////////////////////////////////////////////////////
 
   var originalRange = yZoom.range();
+
+  var padding = 30;
+
+
   if (d3.event.sourceEvent.deltaY > 0) {
     //down
 
-    if ((yZoom.domain()[1] - (bar_h + 10) - yScaleBar.step()) >= (heightBar - 30 - (bar_h + 10 + yScaleBar.step()) * (filterDataScat(dataBar, xScale.domain()).length))) {
-      yZoom.domain([yZoom.domain()[0] - (bar_h + 10) - yScaleBar.step(), yZoom.domain()[1] - (bar_h + 10) - yScaleBar.step()]);
+    if ((yZoom.domain()[1] - (bar_h + 6)) >= (heightBar - padding - (bar_h + 6) * dataBarFilter.length)) {
+      yZoom.domain([yZoom.domain()[0] - (bar_h + 6), yZoom.domain()[1] - (bar_h + 6)]);
+
     }
   } else {
     // up
-    if ((yZoom.domain()[0] + (bar_h + 10) + yScaleBar.step()) <= (heightBar - 30 + yScaleBar.step())) {
-      yZoom.domain([yZoom.domain()[0] + (bar_h + 10) + yScaleBar.step(), yZoom.domain()[1] + (bar_h + 10) + yScaleBar.step()]);
+    if ((yZoom.domain()[0] + (bar_h + 6) ) <= (heightBar - padding )) {
+      yZoom.domain([yZoom.domain()[0] + (bar_h + 6), yZoom.domain()[1] + (bar_h + 6)]);
     }
   }
 
 
 
-  yScaleBar.domain(filterDataScat(dataBar, xScale.domain()).map(function(d, i) {
-    return i + 1;
+  yScaleBar.domain(dataBarFilter.map(function(d, i) {
+    return i;
   }))
+
+  if (yScaleBar.domain().length === 1) {
+    yScaleBar.domain([0, 1])
+  }
 
   yScaleBar.range([yZoom(originalRange[0]), yZoom(originalRange[1])]);
 
   var selected = yScaleBar.domain()
     .filter(function(d, i) {
-      return (heightBar - yScaleBar(i + 1) + i * (bar_h + 10) <= (heightBar - 30) && (30) <= heightBar - yScaleBar(i + 1) + i * (bar_h + 10));
+      return (heightBar - yScaleBar(i) - i * (bar_h + 100) <= (heightBar - padding) && padding <= heightBar - yScaleBar(i) - i * (bar_h + 100));
     });
 
 
-  var newMaxXScale = d3.max(filterDataScat(dataBar, xScale.domain()), function(d, i) {
-    return selected.indexOf(i + 1) > -1 ? d.work_ratings_count : 0;
+  var newMaxXScale = d3.max(dataBarFilter, function(d, i) {
+    return selected.indexOf(i) > -1 ? d.work_ratings_count : 0;
   }) + 50000;
   xScaleBar.domain([0, newMaxXScale]);
 
@@ -920,7 +936,7 @@ function scrolled() {
 
   mainBar.selectAll(".bar").remove();
   var bar = mainBar.selectAll("g.bar")
-    .data(filterDataScat(dataBar, xScale.domain()))
+    .data(dataBarFilter)
     .enter().append("g")
     .attr("class", "bar");
 
@@ -942,10 +958,10 @@ function scrolled() {
       return xScaleBar(d.work_ratings_count); // each bar width is a score
     })
     .attr("y", function(d, i) { // d -> each item | i -> each item's index
-      return heightBar - yScaleBar(i + 1) + i * (bar_h + 10); // com legenda : sem "heightBar -"
+      return heightBar - yScaleBar(i) - i * (bar_h + 100); // com legenda : sem "heightBar -"
     })
     .attr("x", function(d) {
-      return 30; // fit to our scale
+      return padding; // fit to our scale
     })
     .attr("fill", "#5C9AA8")
     .attr("class", "colorBar")
@@ -963,9 +979,9 @@ function scrolled() {
     });
 
   bar.append("text")
-    .attr("x", 30 + 5)
+    .attr("x", padding + 5)
     .attr("y", function(d, i) {
-      return heightBar - yScaleBar(i + 1) + bar_h / 2 + i * (bar_h + 10);
+      return heightBar - yScaleBar(i) - i * (bar_h + 100) + bar_h / 2;
     })
     .text(function(d, i) {
       return i + 1;
@@ -1128,19 +1144,11 @@ function getSelectedValues() {
       authorsValues.push(selectedAuthorVal[i])
     }
     authors = authorsValues;
-
+    dataBarFilter = filterData(dataBar, xScaleScat.domain())
     //  var dt = dataTitle.filter(function(d) { return d.authors.split(",").some(a => authors.includes(a))}).sort(function (a,b) {return d3.ascending(a.title, b.title);});
     //  titles = d3.map(dt, function(d){return d.title;}).keys();
   } else {
     authors = allAuthors;
-  }
-
-  // quando nada selecionado fica como visualizacao inicial
-  if (selectedGenreVal == null && selectedAuthorVal == null) {
-    xScale.domain([2010, 2015]);
-    xScaleScat.domain([2010, 2015]);
-    context.select(".x.brush")
-      .call(brush.move, xScale.domain().map(xScaleOverview));
   }
   update();
 }
