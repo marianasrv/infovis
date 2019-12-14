@@ -18,7 +18,7 @@ var genres, titles, authors, allAuthors, auxAuthors;
 
 
 
-d3.csv("sampleBooks.csv").then(function(data) {
+d3.csv("sample2000.csv").then(function(data) {
   //full_dataScat = data;
   dataLine = data;
   dataScat = data;
@@ -503,40 +503,11 @@ function update() {
 
 function filterData(data, range) {
 
-  var selectedTitleVal = $("#multiselectTitle").val();
   var selectedAuthorVal = $("#multiselectAuthor").val();
   var dataFilter;
   var result;
 
-  if (selectedTitleVal != null) {
-    dataFilter = data.filter(d => titles.includes(d.title));
-    var years = [d3.min(dataFilter, function(d) {
-        return d.original_publication_year;
-      }) - 1,
-      d3.max(dataFilter, function(d) {
-        return d.original_publication_year;
-      }) + 1
-    ];
 
-    xScale.domain(years);
-
-    if ((xScale.domain()[1] - xScale.domain()[0]) < 4) {
-      xAxis.ticks((xScale.domain()[1] - xScale.domain()[0]) / 2 + 1);
-      if ((xScale.domain()[1] - xScale.domain()[0]) == 1) {
-        xAxis.ticks(1);
-      }
-    } else if ((xScale.domain()[1] - xScale.domain()[0]) > 45) {
-
-      xAxis.ticks((xScale.domain()[1] - xScale.domain()[0]) / 4);
-
-    } else {
-      xAxis.ticks((xScale.domain()[1] - xScale.domain()[0]) / 2);
-
-    }
-    context.select(".x.brush")
-      .call(brush.move, years.map(xScaleOverview));
-
-  } else {
     if (selectedAuthorVal != null) {
       dataFilter = data.filter(d => genres.includes(d.tag_name) && d.authors.split(",").some(a => authors.includes(a)));
       var years = [d3.min(dataFilter, function(d) {
@@ -565,8 +536,8 @@ function filterData(data, range) {
         .call(brush.move, years.map(xScaleOverview));
     } else {
       dataFilter = data.filter(d => genres.includes(d.tag_name));
-    }
   }
+
   dataFilter = d3.nest()
     .key(function(d) {
       return d.original_publication_year;
@@ -576,7 +547,7 @@ function filterData(data, range) {
         return d.average_rating;
       });
     })
-    .entries(dataFilter);
+    .entries(dataLine);
 
   dataFilter.forEach(function(d, i) {
     d.key = +d.key;
@@ -585,7 +556,7 @@ function filterData(data, range) {
     return d3.ascending(a.key, b.key);
   });
 
-  if (selectedTitleVal != null || selectedAuthorVal != null) {
+  if (selectedAuthorVal != null) {
     result = dataFilter;
     console.log(result)
   } else {
@@ -597,39 +568,12 @@ function filterData(data, range) {
 
 function filterDataScat(data, range) {
 
-  var selectedTitleVal = $("#multiselectTitle").val();
+
   var selectedAuthorVal = $("#multiselectAuthor").val();
   var dataFilter;
   var result;
 
-  if (selectedTitleVal != null) {
-    dataFilter = data.filter(d => titles.includes(d.title));
-    var years = [d3.min(dataFilter, function(d) {
-        return d.original_publication_year;
-      }) - 1,
-      d3.max(dataFilter, function(d) {
-        return d.original_publication_year;
-      }) + 1
-    ];
-    xScaleScat.domain(years);
-    if ((xScaleScat.domain()[1] - xScaleScat.domain()[0]) < 4) {
 
-      xAxisScat.ticks((xScaleScat.domain()[1] - xScaleScat.domain()[0]) / 2 + 1);
-      if ((xScaleScat.domain()[1] - xScaleScat.domain()[0]) == 1) {
-
-        xAxisScat.ticks(1);
-      }
-    } else if ((xScaleScat.domain()[1] - xScaleScat.domain()[0]) > 45) {
-
-      xAxisScat.ticks((xScaleScat.domain()[1] - xScaleScat.domain()[0]) / 4);
-    } else {
-      xAxisScat.ticks(xScaleScat.domain()[1] - xScaleScat.domain()[0]);
-    }
-    context.select(".x.brush")
-      .call(brush.move, years.map(xScaleOverview));
-
-    result = dataFilter;
-  } else {
     if (selectedAuthorVal != null) {
       result = data.filter(d => d.authors.split(",").some(a => authors.includes(a)) &&
         genres.includes(d.tag_name));
@@ -662,7 +606,6 @@ function filterDataScat(data, range) {
         genres.includes(d.tag_name));
 
     }
-  }
 
 
   return result;
@@ -1046,12 +989,7 @@ function genMenu() {
     return d.tag_name;
   }).keys();
 
-  dataTitle.sort(function(a, b) {
-    return d3.ascending(a.title, b.title);
-  });
-  titles = d3.map(dataTitle, function(d) {
-    return d.title;
-  }).keys();
+
 
   dataAuthors.sort(function(a, b) {
     return d3.ascending(a.authors, b.authors);
@@ -1083,6 +1021,7 @@ function genMenu() {
 
   $('#multiselectGenre').multiselect({
     buttonWidth: '160px',
+    maxHeight: 400,
     includeSelectAllOption: true,
     enableFiltering: true,
     enableCaseInsensitiveFiltering: true,
@@ -1108,6 +1047,7 @@ function genMenu() {
 
   $('#multiselectAuthor').multiselect({
     buttonWidth: '160px',
+    maxHeight: 400,
     includeSelectAllOption: true,
     enableFiltering: true,
     enableCaseInsensitiveFiltering: true,
@@ -1131,37 +1071,10 @@ function genMenu() {
 
   $('#multiselectAuthor').multiselect('rebuild');
 
-
-  $('#multiselectTitle').multiselect({
-    buttonWidth: '160px',
-    includeSelectAllOption: true,
-    enableFiltering: true,
-    enableCaseInsensitiveFiltering: true,
-    filterPlaceholder: 'Search',
-    nonSelectedText: 'Select a Title',
-    selectAllText: 'Select All',
-    nSelectedText: ' selected elements',
-    allSelectedText: 'All Books'
-  });
-
-  d3.select("#multiselectTitle").selectAll("option")
-    .data(titles)
-    .enter()
-    .append("option")
-    .text(function(d) {
-      return d;
-    })
-    .attr("value", function(d) {
-      return d;
-    });
-
-  $('#multiselectTitle').multiselect('rebuild');
-
 }
 
 function getSelectedValues() {
   var selectedGenreVal = $("#multiselectGenre").val();
-  var selectedTitleVal = $("#multiselectTitle").val();
   var selectedAuthorVal = $("#multiselectAuthor").val();
   if (selectedGenreVal != null) {
     genValues = []
@@ -1207,18 +1120,6 @@ function getSelectedValues() {
     }).keys();
   }
 
-  if (selectedTitleVal != null) {
-    titleValues = []
-
-    for (var i = 0; i < selectedTitleVal.length; i++) {
-      titleValues.push(selectedTitleVal[i])
-    }
-    titles = titleValues;
-  } else {
-    titles = d3.map(dataTitle, function(d) {
-      return d.title;
-    }).keys();
-  }
 
   if (selectedAuthorVal != null) {
     authorsValues = []
@@ -1235,7 +1136,7 @@ function getSelectedValues() {
   }
 
   // quando nada selecionado fica como visualizacao inicial
-  if (selectedGenreVal == null && selectedAuthorVal == null && selectedTitleVal == null) {
+  if (selectedGenreVal == null && selectedAuthorVal == null) {
     xScale.domain([2010, 2015]);
     xScaleScat.domain([2010, 2015]);
     context.select(".x.brush")
