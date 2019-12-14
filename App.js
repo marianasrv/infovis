@@ -17,6 +17,26 @@ var selectedBar, selectedBars, selectedDotsOnScat, selectedCircle, selectedOnLin
 var tooltip, showTooltip, hideTooltip, moveTooltip, showTooltipLine;
 var genres, titles, authors, allAuthors, auxAuthors;
 
+var opts = {
+  lines: 20, // The number of lines to draw
+  length: 80, // The length of each line
+  width: 30, // The line thickness
+  radius: 84, // The radius of the inner circle
+  scale: 0.45, // Scales overall size of the spinner
+  corners: 0.4, // Corner roundness (0..1)
+  color: '#5C9AA8', // CSS color or array of colors
+  fadeColor: 'transparent', // CSS color or array of colors
+  speed: 1.1, // Rounds per second
+  rotate: 0, // The rotation offset
+  animation: 'spinner-line-shrink', // The CSS animation name for the lines
+  direction: 1, // 1: clockwise, -1: counterclockwise
+  zIndex: 2e9, // The z-index (defaults to 2000000000)
+  className: 'spinner', // The CSS class to assign to the spinner
+  top: '50%', // Top position relative to parent
+  left: '50%', // Left position relative to parent
+  shadow: '0 0 1px transparent', // Box-shadow for the lines
+  position: 'absolute' // Element positioning
+};
 
 
 d3.csv("sample4000.csv").then(function(data) {
@@ -80,8 +100,8 @@ d3.csv("sample4000.csv").then(function(data) {
   genScatterplot();
   genBarChart();
 
-
-
+  spinner.stop();
+  target.classList.remove("opaque");
 });
 
 function genLineChart() {
