@@ -1172,3 +1172,11 @@ function getSelectedValues() {
   }
   update();
 }
+
+function deselectAll() {
+  $("#multiselectAuthor").multiselect('clearSelection');
+  $('#multiselectAuthor').multiselect('refresh');
+  $("#multiselectGenre").multiselect('clearSelection');
+  $('#multiselectGenre').multiselect('refresh');
+  update();
+}
