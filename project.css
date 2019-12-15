@@ -58,7 +58,7 @@
 }
 
 #Left {
-  background-color:#5C9AA8;
+  background-color: white;
   display: flex;
 }
 
@@ -84,6 +84,10 @@
     white-space: normal !important;
 }
 
+#clearAll {
+  width: 160px;
+  height: 34px;
+}
 
 #scatterplot {
   align-items: flex-end;
@@ -94,6 +98,12 @@
 }
 
 #Network {
+
+}
+
+.links line {
+  stroke: #999;
+  stroke-opacity: 0.6;
 }
 
 body {
