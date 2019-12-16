@@ -88,7 +88,7 @@ d3.csv("sample.csv").then(function(data) {
         .duration(100)
         .style("opacity", .8)
       tooltip
-        .html('<span> Title: ' + d.title + '\n' + ', Author: ' + d.author + '</span>')
+        .html('<span> Title: ' + d.title + '\n' + ', Author: ' + d.author + ', Rating: ' + d.rating + '</span>')
         .style("left", (d3.event.pageX) + 10 + "px")
         .style("top", (d3.event.pageY) + 10 + "px")
     }
@@ -98,7 +98,7 @@ d3.csv("sample.csv").then(function(data) {
         .duration(100)
         .style("opacity", .8)
       tooltip
-        .html('<span> Title: ' + d.title + '\n' + ', Author: ' + d.authors + '</span>')
+        .html('<span> Title: ' + d.title + '\n' + ', Author: ' + d.authors + ', Rating: ' + d.average_rating + '</span>')
         .style("left", (d3.event.pageX) + 10 + "px")
         .style("top", (d3.event.pageY) + 10 + "px")
     }
@@ -358,7 +358,7 @@ function genLineChart() {
       selectedNode.attr("r", 3);
       selectedNodes.attr("r", 3);
     }
-    
+
 
 
 
@@ -397,7 +397,7 @@ function genLineChart() {
     selectedNodes.attr("opacity", 1);
     selectedNodes.attr("r", 6);
 
-  
+
 
   });
 
@@ -432,7 +432,7 @@ function genLineChart() {
       selectedNode.attr("r", 3);
       selectedNodes.attr("r", 3);
     }
-   
+
   })
 
 
@@ -1333,7 +1333,7 @@ function filterNetwork(data, range, links=1) {
         d.original_publication_year < xScaleScat.domain()[1] &&
         genres.includes(d.genre));
     }
-   
+
   }
 }
 
