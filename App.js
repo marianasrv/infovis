@@ -14,8 +14,9 @@ var focus, context;
 var height;
 var dispatch;
 var selectedBar, selectedBars, selectedDotsOnScat, selectedCircle, selectedOnLine, selectedDotOnLine;
-var tooltip, showTooltip, hideTooltip, moveTooltip, showTooltipLine;
+var tooltip, showTooltip, hideTooltip, moveTooltip, showTooltipLine, showTooltipNetwork;
 var genres, titles, authors, allAuthors, auxAuthors;
+var link, node;
 
 var opts = {
   lines: 20, // The number of lines to draw
@@ -48,60 +49,76 @@ d3.csv("sample.csv").then(function(data) {
   dataTitle = data;
   dataAuthors = data;
   // dataNet = data.slice(0, 10);
-  dispatch = d3.dispatch("MouseOver", "MouseLeave");
+  d3.json("test.json").then(function(data) {
+    console.log(data); // this is your data
+    dataNet = data;
 
-  tooltip = d3.select("body")
-    .append("div")
-    .style("opacity", 0)
-    .attr("class", "tooltip")
-    .style("background-color", "black")
-    .style("color", "white")
-    .style("border-radius", "5px")
-    .style("padding", "10px")
-    .style("position", "absolute")
+    dispatch = d3.dispatch("MouseOver", "MouseLeave");
 
-  // A function that change this tooltip when the user hover a point.
-  // Its opacity is set to 1: we can now see it. Plus it set the text and position of tooltip depending on the datapoint (d)
-  showTooltipLine = function(d) {
-    tooltip
-      .transition()
-      .duration(100)
-      .style("opacity", .8)
-    tooltip
-      .html(parseFloat(d.value).toFixed(2))
-      .style("left", (d3.event.pageX) + 10 + "px")
-      .style("top", (d3.event.pageY) + 10 + "px")
-  }
-  showTooltip = function(d) {
-    tooltip
-      .transition()
-      .duration(100)
-      .style("opacity", .8)
-    tooltip
-      .html(d.title)
-      .style("left", (d3.event.pageX) + 10 + "px")
-      .style("top", (d3.event.pageY) + 10 + "px")
-  }
-  moveTooltip = function(d) {
-    tooltip
-      .style("left", (d3.event.pageX) + 10 + "px")
-      .style("top", (d3.event.pageY) + 10 + "px")
-  }
-  // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
-  hideTooltip = function(d) {
-    tooltip
-      .transition()
-      .duration(100)
+    tooltip = d3.select("body")
+      .append("div")
       .style("opacity", 0)
-  }
+      .attr("class", "tooltip")
+      .style("background-color", "black")
+      .style("color", "white")
+      .style("border-radius", "5px")
+      .style("padding", "10px")
+      .style("position", "absolute")
 
-  genMenu();
-  genLineChart();
-  genScatterplot();
-  genBarChart();
+    // A function that change this tooltip when the user hover a point.
+    // Its opacity is set to 1: we can now see it. Plus it set the text and position of tooltip depending on the datapoint (d)
+    showTooltipLine = function(d) {
+      tooltip
+        .transition()
+        .duration(100)
+        .style("opacity", .8)
+      tooltip
+        .html(parseFloat(d.value).toFixed(2))
+        .style("left", (d3.event.pageX) + 10 + "px")
+        .style("top", (d3.event.pageY) + 10 + "px")
+    }
+    showTooltipNetwork = function(d) {
+      tooltip
+        .transition()
+        .duration(100)
+        .style("opacity", .8)
+      tooltip
+        .html(d.id)
+        .style("left", (d3.event.pageX) + 10 + "px")
+        .style("top", (d3.event.pageY) + 10 + "px")
+    }
+    showTooltip = function(d) {
+      tooltip
+        .transition()
+        .duration(100)
+        .style("opacity", .8)
+      tooltip
+        .html(d.title)
+        .style("left", (d3.event.pageX) + 10 + "px")
+        .style("top", (d3.event.pageY) + 10 + "px")
+    }
+    moveTooltip = function(d) {
+      tooltip
+        .style("left", (d3.event.pageX) + 10 + "px")
+        .style("top", (d3.event.pageY) + 10 + "px")
+    }
+    // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
+    hideTooltip = function(d) {
+      tooltip
+        .transition()
+        .duration(100)
+        .style("opacity", 0)
+    }
 
-  spinner.stop();
-  target.classList.remove("opaque");
+    genMenu();
+    genLineChart();
+    genScatterplot();
+    genBarChart();
+    genNetwork();
+
+    spinner.stop();
+    target.classList.remove("opaque");
+  })
 });
 
 function genLineChart() {
@@ -529,34 +546,34 @@ function filterData(data, range) {
   var result;
 
 
-    if (selectedAuthorVal != null) {
-      dataFilter = data.filter(d => genres.includes(d.tag_name) && d.authors.split(",").some(a => authors.includes(a)));
-      var years = [d3.min(dataFilter, function(d) {
-          return d.original_publication_year;
-        }),
-        d3.max(dataFilter, function(d) {
-          return d.original_publication_year;
-        })
-      ];
+  if (selectedAuthorVal != null) {
+    dataFilter = data.filter(d => genres.includes(d.tag_name) && d.authors.split(",").some(a => authors.includes(a)));
+    var years = [d3.min(dataFilter, function(d) {
+        return d.original_publication_year;
+      }),
+      d3.max(dataFilter, function(d) {
+        return d.original_publication_year;
+      })
+    ];
 
-      xScale.domain(years);
-      if ((xScale.domain()[1] - xScale.domain()[0]) < 4) {
-        xAxis.ticks((xScale.domain()[1] - xScale.domain()[0]) / 2 + 1);
-        if ((xScale.domain()[1] - xScale.domain()[0]) == 1) {
-          xAxis.ticks(1);
-        }
-      } else if ((xScale.domain()[1] - xScale.domain()[0]) > 45) {
-
-        xAxis.ticks((xScale.domain()[1] - xScale.domain()[0]) / 4);
-
-      } else {
-        xAxis.ticks((xScale.domain()[1] - xScale.domain()[0]) / 2);
-
+    xScale.domain(years);
+    if ((xScale.domain()[1] - xScale.domain()[0]) < 4) {
+      xAxis.ticks((xScale.domain()[1] - xScale.domain()[0]) / 2 + 1);
+      if ((xScale.domain()[1] - xScale.domain()[0]) == 1) {
+        xAxis.ticks(1);
       }
-      context.select(".x.brush")
-        .call(brush.move, years.map(xScaleOverview));
+    } else if ((xScale.domain()[1] - xScale.domain()[0]) > 45) {
+
+      xAxis.ticks((xScale.domain()[1] - xScale.domain()[0]) / 4);
+
     } else {
-      dataFilter = data.filter(d => genres.includes(d.tag_name));
+      xAxis.ticks((xScale.domain()[1] - xScale.domain()[0]) / 2);
+
+    }
+    context.select(".x.brush")
+      .call(brush.move, years.map(xScaleOverview));
+  } else {
+    dataFilter = data.filter(d => genres.includes(d.tag_name));
   }
 
   dataFilter = d3.nest()
@@ -594,39 +611,39 @@ function filterDataScat(data, range) {
   var result;
 
 
-    if (selectedAuthorVal != null) {
-      result = data.filter(d => d.authors.split(",").some(a => authors.includes(a)) &&
-        genres.includes(d.tag_name));
-      var years = [d3.min(result, function(d) {
-          return d.original_publication_year;
-        }),
-        d3.max(result, function(d) {
-          return d.original_publication_year;
-        }) + 1
-      ];
-      xScaleScat.domain(years);
-      if ((xScaleScat.domain()[1] - xScaleScat.domain()[0]) < 4) {
+  if (selectedAuthorVal != null) {
+    result = data.filter(d => d.authors.split(",").some(a => authors.includes(a)) &&
+      genres.includes(d.tag_name));
+    var years = [d3.min(result, function(d) {
+        return d.original_publication_year;
+      }),
+      d3.max(result, function(d) {
+        return d.original_publication_year;
+      }) + 1
+    ];
+    xScaleScat.domain(years);
+    if ((xScaleScat.domain()[1] - xScaleScat.domain()[0]) < 4) {
 
-        xAxisScat.ticks((xScaleScat.domain()[1] - xScaleScat.domain()[0]) / 2 + 1);
-        if ((xScaleScat.domain()[1] - xScaleScat.domain()[0]) == 1) {
+      xAxisScat.ticks((xScaleScat.domain()[1] - xScaleScat.domain()[0]) / 2 + 1);
+      if ((xScaleScat.domain()[1] - xScaleScat.domain()[0]) == 1) {
 
-          xAxisScat.ticks(1);
-        }
-      } else if ((xScaleScat.domain()[1] - xScaleScat.domain()[0]) > 45) {
-
-        xAxisScat.ticks((xScaleScat.domain()[1] - xScaleScat.domain()[0]) / 4);
-      } else {
-        xAxisScat.ticks(xScaleScat.domain()[1] - xScaleScat.domain()[0]);
+        xAxisScat.ticks(1);
       }
-      context.select(".x.brush")
-        .call(brush.move, years.map(xScaleOverview));
+    } else if ((xScaleScat.domain()[1] - xScaleScat.domain()[0]) > 45) {
 
-      console.log(result)
+      xAxisScat.ticks((xScaleScat.domain()[1] - xScaleScat.domain()[0]) / 4);
     } else {
-      result = data.filter(d => d.original_publication_year >= range[0] && d.original_publication_year < range[1] &&
-        genres.includes(d.tag_name));
-
+      xAxisScat.ticks(xScaleScat.domain()[1] - xScaleScat.domain()[0]);
     }
+    context.select(".x.brush")
+      .call(brush.move, years.map(xScaleOverview));
+
+    console.log(result)
+  } else {
+    result = data.filter(d => d.original_publication_year >= range[0] && d.original_publication_year < range[1] &&
+      genres.includes(d.tag_name));
+
+  }
 
 
   return result;
@@ -919,7 +936,7 @@ function scrolled() {
     }
   } else {
     // up
-    if ((yZoom.domain()[0] + (bar_h + 6) ) <= (heightBar - padding )) {
+    if ((yZoom.domain()[0] + (bar_h + 6)) <= (heightBar - padding)) {
       yZoom.domain([yZoom.domain()[0] + (bar_h + 6), yZoom.domain()[1] + (bar_h + 6)]);
     }
   }
@@ -1109,6 +1126,92 @@ function genMenu() {
 
 }
 
+function genNetwork() {
+
+  var width = 600,
+    height = 400;
+
+  var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+  var svg = d3.select("#Network").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+
+  var simulation = d3.forceSimulation()
+    .force("link", d3.forceLink().id(function(d) {
+      return d.id;
+    }))
+    .force("charge", d3.forceManyBody())
+    .force("center", d3.forceCenter(width / 2, height / 2));
+
+
+
+
+  link = svg.append("g")
+    .attr("class", "links")
+    .selectAll("line")
+    .data(dataNet.links)
+    .enter().append("line")
+    .attr("stroke-width", function(d) {
+      return Math.sqrt(d.value);
+    });
+
+  node = svg.append("g")
+    .attr("class", "nodes")
+    .selectAll("g")
+    .data(dataNet.nodes)
+    .enter().append("g");
+
+  var circles = node.append("circle")
+    .attr("r", 5)
+    .attr("fill", function(d) {
+      return color(d.group);
+    });
+
+  simulation
+    .nodes(dataNet.nodes)
+    .on("tick", ticked);
+
+  simulation.force("link")
+    .links(dataNet.links);
+
+  node.attr("title", function(d) {
+      return d.id;
+    })
+    .on("mouseover", function(d) {
+      dispatch.call("MouseOver", d, d);
+      showTooltipNetwork(d);
+    })
+    .on("mouseleave", function(d) {
+      dispatch.call("MouseLeave", d, d);
+      hideTooltip(d);
+    });
+
+
+}
+
+function ticked() {
+  link
+    .attr("x1", function(d) {
+      return d.source.x;
+    })
+    .attr("y1", function(d) {
+      return d.source.y;
+    })
+    .attr("x2", function(d) {
+      return d.target.x;
+    })
+    .attr("y2", function(d) {
+      return d.target.y;
+    });
+
+  node
+    .attr("transform", function(d) {
+      return "translate(" + d.x + "," + d.y + ")";
+    })
+}
+
 function getSelectedValues() {
   var selectedGenreVal = $("#multiselectGenre").val();
   var selectedAuthorVal = $("#multiselectAuthor").val();
@@ -1120,35 +1223,6 @@ function getSelectedValues() {
     }
 
     genres = genValues;
-    /*
-
-     SE FOR PARA FILTRAR OS AUTORES E TITULOS SELECIONAVEIS TENDO EM CONTA O(S) GENERO(S) SELECIONADO(S)
-     ----------------
-        var dt = dataTitle.filter(function(d) { return genres.includes(d.tag_name);}).sort(function (a,b) {return d3.ascending(a.title, b.title);});
-        titles = d3.map(dt, function(d){return d.title;}).keys();
-
-        var da = dataAuthors.filter(function(d) { return genres.includes(d.tag_name);}).sort(function (a,b) {return d3.ascending(a.authors, b.authors);});
-        var auxAuthors = d3.map(dataAuthors, function(d){return d.authors;}).keys();
-
-        var authrs = []
-        for (var i = 0; i < auxAuthors.length; i++) {
-          if (auxAuthors[i].includes(",")) {
-            for (e of auxAuthors[i].split(",")){
-              if (!authrs.includes(e)){
-                authrs.push(e)
-              }
-            }
-          }
-          else {
-            if (!authrs.includes(auxAuthors[i])){
-              authrs.push(auxAuthors[i]);
-            }
-          }
-        }
-
-        authrs.sort();
-        authors = authrs;
-        */
 
   } else {
     genres = d3.map(dataGenre, function(d) {
