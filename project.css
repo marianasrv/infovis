@@ -36,6 +36,7 @@
 #FirstRow > * {
   padding: 10px;
   flex: 1 100%;
+  background-color: #ebebeb;
 }
 
 #SecondRow {
@@ -51,14 +52,14 @@
 
 #Right {
   align-items: stretch;
-  background-color: white;
+  background-color: #ebebeb;
   display: flex;
   flex-direction: column;
 
 }
 
 #Left {
-  background-color: white;
+  background-color: #ebebeb;
   display: flex;
 }
 
@@ -71,34 +72,38 @@
 
 #Menus {
   display: flex;
-  background-color:#5C9AA8;
+  background-color: #ebebeb;
   flex-flow: column nowrap;
   min-height: 120;
 }
 
 .multiselect-container {
-  max-width: 300px;
+  max-width: 400px;
 }
 
 .dropdown-menu > li > a {
     white-space: normal !important;
 }
 
+
 #clearAll {
   width: 160px;
   height: 34px;
 }
 
+
+
 #scatterplot {
   align-items: flex-end;
-  background-color: white;
+  background-color: #ebebeb;
   display: flex;
   flex:1;
   flex-direction: column;
+
 }
 
 #Network {
-
+  background-color: white;
 }
 
 .links line {
@@ -113,5 +118,5 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: white;
+  background: #ebebeb;
 }
