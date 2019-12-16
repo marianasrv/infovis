@@ -13,10 +13,14 @@ var line, xAxis;
 var focus, context;
 var height;
 var dispatch;
-var selectedBar, selectedBars, selectedDotsOnScat, selectedCircle, selectedOnLine, selectedDotOnLine;
+var selectedBar, selectedBars, selectedDotsOnScat, selectedCircle, selectedOnLine, selectedDotOnLine, selectedNode;
+var selectedNodes, otherNodes, selectedLinks;
 var tooltip, showTooltip, hideTooltip, moveTooltip, showTooltipLine, showTooltipNetwork;
 var genres, titles, authors, allAuthors, auxAuthors;
-var link, node;
+var svgNetwork, dataFilterLink, dataFilterNode;
+var allLinks, allNodes;
+var link, node, simulation, color;
+var firstTime = 1, menu = 0, years = 0;
 
 var opts = {
   lines: 20, // The number of lines to draw
@@ -25,7 +29,7 @@ var opts = {
   radius: 84, // The radius of the inner circle
   scale: 0.45, // Scales overall size of the spinner
   corners: 0.4, // Corner roundness (0..1)
-  color: '#5C9AA8', // CSS color or array of colors
+  color: '#1f77b4', // CSS color or array of colors
   fadeColor: 'transparent', // CSS color or array of colors
   speed: 1.1, // Rounds per second
   rotate: 0, // The rotation offset
@@ -49,10 +53,11 @@ d3.csv("sample.csv").then(function(data) {
   dataTitle = data;
   dataAuthors = data;
   // dataNet = data.slice(0, 10);
-  d3.json("test.json").then(function(data) {
+  d3.json("data.js").then(function(data) {
     console.log(data); // this is your data
     dataNet = data;
-
+    allLinks = dataNet.Links;
+    allNodes = dataNet.Nodes;
     dispatch = d3.dispatch("MouseOver", "MouseLeave");
 
     tooltip = d3.select("body")
@@ -83,7 +88,7 @@ d3.csv("sample.csv").then(function(data) {
         .duration(100)
         .style("opacity", .8)
       tooltip
-        .html(d.id)
+        .html('<span> Title: ' + d.title + '\n' + ', Author: ' + d.author + '</span>')
         .style("left", (d3.event.pageX) + 10 + "px")
         .style("top", (d3.event.pageY) + 10 + "px")
     }
@@ -93,7 +98,7 @@ d3.csv("sample.csv").then(function(data) {
         .duration(100)
         .style("opacity", .8)
       tooltip
-        .html(d.title)
+        .html('<span> Title: ' + d.title + '\n' + ', Author: ' + d.authors + '</span>')
         .style("left", (d3.event.pageX) + 10 + "px")
         .style("top", (d3.event.pageY) + 10 + "px")
     }
@@ -149,7 +154,7 @@ function genLineChart() {
   var padding = 30
 
   xScale = d3.scaleLinear()
-    .domain([2010, 2015])
+    .domain([2015, 2017])
     .range([padding, widthLine - padding]);
 
   xScaleOverview = d3.scaleLinear()
@@ -158,7 +163,7 @@ function genLineChart() {
       }),
       d3.max(dataContext, function(d) {
         return d.key;
-      })
+      }) + 1
     ])
     .range([padding, widthLine - padding]);
 
@@ -234,7 +239,7 @@ function genLineChart() {
     .datum(filterData(dataLine, xScale.domain()))
     .attr("class", "line")
     .style("fill", "none")
-    .style("stroke", "#5C9AA8")
+    .style("stroke", "#1f77b4")
     .attr("d", line);
 
   focus.append("g")
@@ -269,7 +274,7 @@ function genLineChart() {
     .attr("cy", function(d) {
       return yScale(d.value);
     })
-    .attr("fill", "#5C9AA8")
+    .attr("fill", "#1f77b4")
     .attr("year", function(d) {
       return d.key;
     });
@@ -299,7 +304,7 @@ function genLineChart() {
   context.append("g")
     .attr("class", "x brush")
     .call(brush)
-    .call(brush.move, [2010, 2015].map(xScaleOverview));
+    .call(brush.move, [2015, 2017].map(xScaleOverview));
 
 
   context.append("text")
@@ -325,83 +330,109 @@ function genLineChart() {
 
   dispatch.on("MouseOver", function(book) {
     if (selectedBar) {
-      selectedBar.attr("fill", "#5C9AA8");
+      selectedBar.attr("fill", "#1f77b4");
     }
     if (selectedBars) {
-      selectedBars.attr("fill", "#5C9AA8");
+      selectedBars.attr("fill", "#1f77b4");
     }
     if (selectedDotsOnScat) {
-      selectedDotsOnScat.attr("fill", "#5C9AA8");
+      selectedDotsOnScat.attr("fill", "#1f77b4");
       selectedDotsOnScat.attr("opacity", 0.5);
       selectedDotsOnScat.attr("r", 3);
       selectedDotsOnScat.lower();
     }
     if (selectedDotOnLine) {
-      selectedDotOnLine.attr("fill", "#5C9AA8");
+      selectedDotOnLine.attr("fill", "#1f77b4");
     }
     if (selectedCircle) {
-      selectedCircle.attr("fill", "#5C9AA8");
+      selectedCircle.attr("fill", "#1f77b4");
       selectedCircle.attr("opacity", 0.5);
       selectedCircle.attr("r", 3);
       selectedCircle.lower();
     }
     if (selectedOnLine) {
-      selectedOnLine.attr("fill", "#5C9AA8");
+      selectedOnLine.attr("fill", "#1f77b4");
     }
+    if (otherNodes) {
+      otherNodes.attr("opacity", 1);
+      selectedNode.attr("r", 3);
+      selectedNodes.attr("r", 3);
+    }
+    
+
 
 
     selectedCircle = d3.select("circle[title =\'" + book.title + "\']");
     selectedCircle.attr("opacity", 1);
     selectedCircle.attr("r", 7);
-    selectedCircle.attr("fill", "#F1A758");
+    selectedCircle.attr("fill", "#ff7f0e");
     selectedCircle.raise();
 
 
     selectedOnLine = focus.select("circle[year =\'" + book.original_publication_year + "\']");
-    selectedOnLine.attr("fill", "#F1A758");
+    selectedOnLine.attr("fill", "#ff7f0e");
 
     selectedDotsOnScat = svgScat.selectAll("circle[year =\'" + book.key + "\']");
     selectedDotsOnScat.attr("opacity", 1);
     selectedDotsOnScat.attr("r", 7);
-    selectedDotsOnScat.attr("fill", "#F1A758");
+    selectedDotsOnScat.attr("fill", "#ff7f0e");
     selectedDotsOnScat.raise();
 
 
     selectedDotOnLine = focus.select("circle[year =\'" + book.key + "\']");
-    selectedDotOnLine.attr("fill", "#F1A758");
+    selectedDotOnLine.attr("fill", "#ff7f0e");
 
     selectedBars = d3.selectAll("rect[year =\'" + book.key + "\']");
-    selectedBars.attr("fill", "#F1A758");
+    selectedBars.attr("fill", "#ff7f0e");
     selectedBar = d3.select("rect[title =\'" + book.title + "\']");
-    selectedBar.attr("fill", "#F1A758");
+    selectedBar.attr("fill", "#ff7f0e");
+
+    otherNodes = node.selectAll("circle");
+    otherNodes.attr("opacity", 0.3);
+    selectedNode = node.select("circle[title =\'" + book.title + "\']")
+    selectedNode.attr("opacity", 1);
+    selectedNode.attr("r", 6);
+
+    selectedNodes = node.selectAll("circle[year =\'" + book.key + "\']")
+    selectedNodes.attr("opacity", 1);
+    selectedNodes.attr("r", 6);
+
+  
 
   });
 
   dispatch.on("MouseLeave", function(book) {
     if (selectedBar) {
-      selectedBar.attr("fill", "#5C9AA8");
+      selectedBar.attr("fill", "#1f77b4");
     }
     if (selectedBars) {
-      selectedBars.attr("fill", "#5C9AA8");
+      selectedBars.attr("fill", "#1f77b4");
     }
     if (selectedDotsOnScat) {
-      selectedDotsOnScat.attr("fill", "#5C9AA8");
+      selectedDotsOnScat.attr("fill", "#1f77b4");
       selectedDotsOnScat.attr("opacity", 0.5);
       selectedDotsOnScat.attr("r", 3);
       selectedDotsOnScat.lower();
     }
     if (selectedCircle) {
-      selectedCircle.attr("fill", "#5C9AA8");
+      selectedCircle.attr("fill", "#1f77b4");
       selectedCircle.attr("opacity", 0.5);
       selectedCircle.attr("r", 3);
       selectedCircle.lower();
     }
     if (selectedOnLine) {
-      selectedOnLine.attr("fill", "#5C9AA8");
+      selectedOnLine.attr("fill", "#1f77b4");
     }
     if (selectedDotOnLine) {
-      selectedDotOnLine.attr("fill", "#5C9AA8");
+      selectedDotOnLine.attr("fill", "#1f77b4");
     }
+
+    if (otherNodes) {
+      otherNodes.attr("opacity", 1);
+      selectedNode.attr("r", 3);
+      selectedNodes.attr("r", 3);
+    }
+   
   })
 
 
@@ -410,6 +441,7 @@ function genLineChart() {
 
 
 function brushended() {
+
   const selection = d3.event.selection;
   if (!d3.event.sourceEvent || !selection) return;
   const [x0, x1] = selection.map(d => Math.round(xScaleOverview.invert(d)));
@@ -435,6 +467,7 @@ function brushended() {
       xAxisScat.ticks(xScaleScat.domain()[1] - xScaleScat.domain()[0]);
     }
 
+    years = 1;
     update()
   }
 }
@@ -466,7 +499,7 @@ function update() {
     .attr("year", function(d) {
       return d.key;
     })
-    .attr("fill", "#5C9AA8");
+    .attr("fill", "#1f77b4");
 
 
   focus.select(".x.axis")
@@ -479,7 +512,7 @@ function update() {
     .datum(filterData(dataLine, xScale.domain()))
     .attr("class", "line")
     .style("fill", "none")
-    .style("stroke", "#5C9AA8");
+    .style("stroke", "#1f77b4");
 
   line = d3.line()
     .x(function(d) {
@@ -508,7 +541,7 @@ function update() {
     })
     .attr("r", 3)
     .attr("class", "dot")
-    .attr("fill", "#5C9AA8")
+    .attr("fill", "#1f77b4")
     .attr("opacity", "0.5")
     .attr("cx", function(d) {
       if (d.original_publication_year >= xScaleScat.domain()[1]) {
@@ -535,6 +568,14 @@ function update() {
 
   d3.select(".svgBar").remove();
   genBarChart();
+  d3.select(".svgNetwork").remove();
+  firstTime = 0;
+  simulation.stop();
+  genNetwork();
+  menu = 0;
+  years = 0;
+
+
 }
 
 
@@ -652,12 +693,13 @@ function filterDataScat(data, range) {
 
 function genScatterplot() {
   widthScat = 1200;
-  heightScat = 120;
+  heightScat = 140;
 
   svgScat = d3.select("#scatterplot")
     .append("svg")
     .attr("width", widthScat)
-    .attr("height", heightScat);
+    .attr("height", heightScat)
+    .style("background-color", "white");
 
 
   var padding = 30;
@@ -671,7 +713,7 @@ function genScatterplot() {
 
 
   xScaleScat = d3.scaleLinear()
-    .domain([2010, 2015])
+    .domain([2015, 2018])
     .range([padding, widthScat - padding]);
 
 
@@ -714,7 +756,7 @@ function genScatterplot() {
     })
     .attr("r", 3)
     .attr("class", "dot")
-    .attr("fill", "#5C9AA8")
+    .attr("fill", "#1f77b4")
     .attr("opacity", "0.5")
     .attr("cx", function(d) {
       if (d.original_publication_year >= xScaleScat.domain()[1]) {
@@ -829,7 +871,7 @@ function genBarChart() {
 
   mainBar = svgBar.append("g")
     .attr("class", "BarWrapper")
-    .attr("transform", "translate(0,-30)")
+    .attr("transform", "translate(0,-10)")
     .append("g") //another one for the clip path - due to not wanting to clip the labels
     .attr("class", "MainBar")
     .attr("clip-path", "url(#path)");
@@ -870,7 +912,7 @@ function genBarChart() {
     .attr("x", function(d) {
       return padding; // fit to our scale
     })
-    .attr("fill", "#5C9AA8")
+    .attr("fill", "#1f77b4")
     .attr("class", "colorBar")
     .attr("title", function(d) {
       return d.title;
@@ -1000,7 +1042,7 @@ function scrolled() {
     .attr("x", function(d) {
       return padding; // fit to our scale
     })
-    .attr("fill", "#5C9AA8")
+    .attr("fill", "#1f77b4")
     .attr("class", "colorBar")
     .attr("title", function(d) {
       return d.title;
@@ -1128,70 +1170,176 @@ function genMenu() {
 
 function genNetwork() {
 
-  var width = 600,
-    height = 400;
+  var width = 655,
+    height = 460;
 
-  var color = d3.scaleOrdinal(d3.schemeCategory10);
+  color = d3.scaleOrdinal(d3.schemeCategory10);
 
-  var svg = d3.select("#Network").append("svg")
+
+
+  svgNetwork = d3.select("#Network").append("svg")
+    .attr("class", "svgNetwork")
     .attr("width", width)
-    .attr("height", height);
-
-
-  var simulation = d3.forceSimulation()
-    .force("link", d3.forceLink().id(function(d) {
-      return d.id;
-    }))
-    .force("charge", d3.forceManyBody())
-    .force("center", d3.forceCenter(width / 2, height / 2));
+    .attr("height", height)
+    .call(d3.zoom().scaleExtent([1, 8]).on("zoom", function () {
+        svgNetwork.attr("transform", d3.event.transform,d3.event.scale)
+                  //.attr("transform", d3.event.scale)
+})).append("g");
 
 
 
 
-  link = svg.append("g")
-    .attr("class", "links")
-    .selectAll("line")
-    .data(dataNet.links)
-    .enter().append("line")
-    .attr("stroke-width", function(d) {
-      return Math.sqrt(d.value);
-    });
 
-  node = svg.append("g")
-    .attr("class", "nodes")
-    .selectAll("g")
-    .data(dataNet.nodes)
-    .enter().append("g");
+    if (firstTime == 1){
+      simulation = d3.forceSimulation()
+        .force("link", d3.forceLink().id(function(d) {
+          return d.id;
+        }))
+        .force("charge", d3.forceManyBody().strength(-0.25).distanceMax(400))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("collide", d3.forceCollide().radius(d => d.rating));
+    }
+    else {
+      simulation.alphaTarget(0.1).restart()
+    }
 
-  var circles = node.append("circle")
-    .attr("r", 5)
-    .attr("fill", function(d) {
-      return color(d.group);
-    });
 
-  simulation
-    .nodes(dataNet.nodes)
-    .on("tick", ticked);
 
-  simulation.force("link")
-    .links(dataNet.links);
 
-  node.attr("title", function(d) {
-      return d.id;
-    })
-    .on("mouseover", function(d) {
-      dispatch.call("MouseOver", d, d);
-      showTooltipNetwork(d);
-    })
-    .on("mouseleave", function(d) {
-      dispatch.call("MouseLeave", d, d);
-      hideTooltip(d);
-    });
+      dataFilterNode = filterNetwork(allNodes, xScaleScat.domain(), links=0);
+
+
+
+      dataFilterLink = filterNetwork(allLinks, xScaleScat.domain());
+
+      /*
+      var pageBounds = { x: 0, y: 0, width: 620, height: 460 },
+      page = svgNetwork.append('rect').attr('id', 'page')
+                              .attr("fill", "white")
+                              .attr("x", pageBounds.x)
+                              .attr("y", pageBounds.y)
+                              .attr("width", pageBounds.width)
+                              .attr("height", pageBounds.height),
+      nodeRadius = 10,
+      topLeft = { x: pageBounds.x, y: pageBounds.y, fixed: true },
+      tlIndex = allNodes.push(topLeft) - 1,
+      bottomRight = { x: pageBounds.x + pageBounds.width, y: pageBounds.y + pageBounds.height, fixed: true },
+      brIndex = allNodes.push(bottomRight) - 1,
+      constraints = [];
+      for (var i = 0; i < dataFilterNode.length; i++) {
+          constraints.push({ axis: 'x', type: 'separation', left: tlIndex, right: i, gap: nodeRadius });
+          constraints.push({ axis: 'y', type: 'separation', left: tlIndex, right: i, gap: nodeRadius });
+          constraints.push({ axis: 'x', type: 'separation', left: i, right: brIndex, gap: nodeRadius });
+          constraints.push({ axis: 'y', type: 'separation', left: i, right: brIndex, gap: nodeRadius });
+      }
+      */
+
+      link = svgNetwork.append("g")
+        .attr("class", "links")
+        .selectAll("line")
+        .data(dataFilterLink)
+        .enter().append("line")
+        .attr("stroke-width", function(d) {
+          return d.value * 5;
+        });
+
+      node = svgNetwork.append("g")
+        .attr("class", "nodes");
+
+        node.selectAll("circle")
+        .data(dataFilterNode)
+        .enter().append("circle")
+        .on("mouseover", function(d) {
+          dispatch.call("MouseOver", d, d);
+          showTooltipNetwork(d);
+        })
+        .on("mouseleave", function(d) {
+          dispatch.call("MouseLeave", d, d);
+          hideTooltip(d);
+        })
+        .attr("opacity", 1)
+        .attr("fill", function(d) {
+          return color(d.genre);
+        })
+        .attr("r", 3)
+        .attr("title", function(d) {
+          return d.title;
+        })
+        .attr("year", function(d) {
+          return d.original_publication_year;
+        })
+         .call(d3.drag()
+              .on("start", dragstarted)
+              .on("drag", dragged)
+              .on("end", dragended));
+
+      simulation
+        .nodes(dataFilterNode)
+        .on("tick", ticked)
+        //.alphaDecay(0)
+        .force("link")
+        .links(dataFilterLink);
+
+
+    //invalidation.then(() => simulation.stop());
 
 
 }
 
+
+  function dragstarted(d) {
+    if (!d3.event.active) simulation.alphaTarget(0.1).restart();
+    d.fx = d.x;
+    d.fy = d.y;
+  }
+
+  function dragged(d) {
+    d.fx = d3.event.x;
+    d.fy = d3.event.y;
+  }
+
+  function dragended(d) {
+    if (!d3.event.active) simulation.alphaTarget(0);
+    d.fx = null;
+    d.fy = null;
+  }
+
+
+function filterNetwork(data, range, links=1) {
+
+  if (links == 1) {
+    if (firstTime == 1 || (years == 1 )) { //&& ($("#multiselectGenre").val() != null || $("#multiselectAuthor").val()))) {
+      return data.filter(d => d.source_year >= range[0] && d.source_year < range[1] &&
+                              d.target_year >= range[0] && d.target_year < range[1]
+                              && dataFilterNode.some(item => item.id == d.source)
+                              && dataFilterNode.some(item => item.id == d.target));
+    }
+   else {
+
+      return data.filter(d => d.source_year >= range[0] && d.source_year < range[1] &&
+                                d.target_year >= range[0] && d.target_year < range[1] &&
+                                dataFilterNode.some(item => item.id == d.source.id) &&
+                                dataFilterNode.some(item => item.id == d.target.id));
+    }
+
+
+  }
+  else {
+    if ($("#multiselectAuthor").val() != null) {
+      return data.filter(d => d.author.split(",").some(a => authors.includes(a)))
+    }
+    else {
+      return data.filter(d => d.original_publication_year >= xScaleScat.domain()[0] &&
+        d.original_publication_year < xScaleScat.domain()[1] &&
+        genres.includes(d.genre));
+    }
+   
+  }
+}
+
+
 function ticked() {
+
   link
     .attr("x1", function(d) {
       return d.source.x;
@@ -1206,7 +1354,7 @@ function ticked() {
       return d.target.y;
     });
 
-  node
+  node.selectAll("circle")
     .attr("transform", function(d) {
       return "translate(" + d.x + "," + d.y + ")";
     })
@@ -1223,6 +1371,10 @@ function getSelectedValues() {
     }
 
     genres = genValues;
+    authors = allAuthors;
+    $("#multiselectAuthor").multiselect('clearSelection');
+    $('#multiselectAuthor').multiselect('refresh');
+    $('#multiselectGenre').multiselect('refresh');
 
   } else {
     genres = d3.map(dataGenre, function(d) {
@@ -1238,13 +1390,31 @@ function getSelectedValues() {
       authorsValues.push(selectedAuthorVal[i])
     }
     authors = authorsValues;
+    //$("#multiselectGenre").multiselect('clearSelection');
+    //$('#multiselectGenre').multiselect('refresh');
+    genres = d3.map(dataGenre, function(d) {
+      return d.tag_name;
+    }).keys();
+    $("#multiselectGenre").multiselect('clearSelection');
+    $('#multiselectGenre').multiselect('refresh');
+    $('#multiselectAuthor').multiselect('refresh');
     dataBarFilter = filterData(dataBar, xScaleScat.domain())
+
+
     //  var dt = dataTitle.filter(function(d) { return d.authors.split(",").some(a => authors.includes(a))}).sort(function (a,b) {return d3.ascending(a.title, b.title);});
     //  titles = d3.map(dt, function(d){return d.title;}).keys();
   } else {
     authors = allAuthors;
   }
+  if (selectedGenreVal == null && selectedAuthorVal == null) {
+    xScale.domain([2015, 2017]);
+    xScaleScat.domain([2015, 2018]);
+    context.select(".x.brush")
+      .call(brush.move, xScale.domain().map(xScaleOverview));
+  }
+  menu = 1;
   update();
+
 }
 
 function deselectAll() {
@@ -1252,5 +1422,6 @@ function deselectAll() {
   $('#multiselectAuthor').multiselect('refresh');
   $("#multiselectGenre").multiselect('clearSelection');
   $('#multiselectGenre').multiselect('refresh');
+  getSelectedValues();
   update();
 }
