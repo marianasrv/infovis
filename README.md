@@ -19,6 +19,7 @@ We used Pentaho to preprocess the dataset, in order to achieve a reasonable amou
 
 1. Download the project [here!](https://github.com/marianasrv/infovis/archive/develop.zip) and unzip at a desired directory.
 2. In the root folder of the project run:
+
 For Mac :
 ```
 python -m http.server 8080
