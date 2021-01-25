@@ -8,6 +8,9 @@ With our line chart, we know the average rating for each year. In this chart, we
 In the bar chart, the books are ordered by popularity in the selected range of years.
 Finally, we have a network chart to check the similarity between variuos books.
 
+<a>
+	<img src="https://github.com/marianasrv/infovis/blob/develop/infovis.png?raw=true">
+</a>
 
 ### Table of content
 
