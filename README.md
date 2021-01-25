@@ -7,6 +7,7 @@ We used Pentaho to preprocess the dataset, in order to achieve a reasonable amou
 ### Table of content
 
 - [Getting Started](#getting_started)
+- [d3](#d3)
 - [Contributors](#contributors)
 - [Show you Support](#support)
 
@@ -29,7 +30,19 @@ For Windows:
 ```
 python -m SimpleHTTPServer 8080
 ```
-3. Go to your browser and go to : [http://localhost:8080/](http://localhost:8080/)
+3. Go to your browser and go to: [http://localhost:8080/](http://localhost:8080/)
+
+<a name="d3"> 
+	
+## 👩‍💻 d3
+
+</a>
+This project is powered by [d3.js](https://d3js.org), a JavaScript library.
+
+For help getting started with d3,check
+[online documentation](https://github.com/d3/d3/wiki), which offers tutorials,
+samples and a full API reference.
+
 
 <a name="contributors"> 
   
