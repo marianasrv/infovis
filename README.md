@@ -1,7 +1,12 @@
 # Information Visualization Project 📊
 This project was developed under the InfoVis course of the Masters Degree in Computer Science and Engineering.
 We developed a visualization about books. We used the dataset [goodbooks-10k](https://www.kaggle.com/zygmunt/goodbooks-10k) from kaggle.
-We used Pentaho to preprocess the dataset, in order to achieve a reasonable amout of data.
+
+In our visualization, you can search for books by genre and by author.
+In the scatterplot, the books are organized by publication year.
+With our line chart, we know the average rating for each year. In this chart, we can change the range of year that we can evaluate.
+In the bar chart, the books are ordered by popularity in the selected range of years.
+Finally, we have a network chart to check the similarity between variuos books.
 
 
 ### Table of content
