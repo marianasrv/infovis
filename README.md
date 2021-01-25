@@ -29,7 +29,7 @@ For Windows:
 ```
 python -m SimpleHTTPServer 8080
 ```
-3. Go to your browser and go to : [http://localhost:8080/]
+3. Go to your browser and go to : [http://localhost:8080/](http://localhost:8080/)
 
 <a name="contributors"> 
   
