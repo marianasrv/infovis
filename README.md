@@ -37,9 +37,10 @@ python -m SimpleHTTPServer 8080
 ## 👩‍💻 d3
 
 </a>
+
 This project is powered by [d3.js](https://d3js.org), a JavaScript library.
 
-For help getting started with d3,check
+For help getting started with d3, check
 [online documentation](https://github.com/d3/d3/wiki), which offers tutorials,
 samples and a full API reference.
 
