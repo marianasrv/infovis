@@ -1,4 +1,4 @@
-# Information Visualization Project
+# Information Visualization Project 📊
 This project was developed under the InfoVis course of the Masters Degree in Computer Science and Engineering.
 We developed a visualization about books. We used the dataset [goodbooks-10k](https://www.kaggle.com/zygmunt/goodbooks-10k) from kaggle.
 We used Pentaho to preprocess the dataset, in order to achieve a reasonable amout of data.
