@@ -1,5 +1,6 @@
 # Information Visualization Project 📊
-This project was developed under the InfoVis course of the Masters Degree in Computer Science and Engineering.
+This project was developed under the InfoVis course of the Masters Degree in Computer Science and Engineering, at Instituto Superior Técnico, Lisbon.
+
 We developed a visualization about books. We used the dataset [goodbooks-10k](https://www.kaggle.com/zygmunt/goodbooks-10k) from kaggle.
 
 In our visualization, you can search for books by genre and by author.
